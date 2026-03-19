@@ -25,6 +25,11 @@ type AdminTab =
   | "studio"
   | "inbox";
 
+type StudioManagerContentsProps = {
+  embedded?: boolean;
+  onClose?: () => void;
+};
+
 function updateItem<T>(items: T[], index: number, updater: (item: T) => T) {
   return items.map((item, itemIndex) => (itemIndex === index ? updater(item) : item));
 }
@@ -183,12 +188,8 @@ export function LoginPageContent() {
   } = useStudio();
   const [mode, setMode] = useState<"signin" | "register">("signin");
   const [displayName, setDisplayName] = useState("");
-  const [email, setEmail] = useState(
-    firebaseConfigured ? "" : demoAdminCredentials.email
-  );
-  const [password, setPassword] = useState(
-    firebaseConfigured ? "" : demoAdminCredentials.password
-  );
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
@@ -242,6 +243,21 @@ export function LoginPageContent() {
     );
   }
 
+  if (!firebaseConfigured) {
+    return (
+      <div className="page-shell">
+        <section className="locked-panel reveal">
+          <span className="hero-eyebrow">Member Access</span>
+          <h1>Account access is not available right now.</h1>
+          <p>Please contact the studio directly if you need help with class registration.</p>
+          <Link className="cta-button" href="/contact">
+            Contact the studio
+          </Link>
+        </section>
+      </div>
+    );
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -260,11 +276,6 @@ export function LoginPageContent() {
         }
 
         setErrorMessage("");
-        if (!firebaseConfigured) {
-          router.push("/admin");
-          return;
-        }
-
         router.push("/");
       } catch (error) {
         setInfoMessage("");
@@ -274,10 +285,6 @@ export function LoginPageContent() {
   }
 
   function handlePasswordReset() {
-    if (!firebaseConfigured) {
-      return;
-    }
-
     startTransition(async () => {
       try {
         await sendPasswordReset(email);
@@ -302,37 +309,23 @@ export function LoginPageContent() {
             Manage your account, stay close to studio updates, and keep your next class inquiry
             moving.
           </p>
-          {!firebaseConfigured ? (
-            <div className="credential-card">
-              <strong>Studio management access</strong>
-              <span>Please use the sign-in details provided by your studio team.</span>
-              <span>If you need help accessing your account, contact the studio directly.</span>
-            </div>
-          ) : (
-            <div className="credential-card">
-              <strong>New here?</strong>
-              <span>Create an account to get started.</span>
-              <span>If you help run the studio, management tools will appear after sign-in.</span>
-            </div>
-          )}
+          <div className="credential-card">
+            <strong>New here?</strong>
+            <span>Create an account to get started.</span>
+            <span>If you help run the studio, management tools will appear after sign-in.</span>
+          </div>
         </div>
         <div className="auth-panel__form">
-          {firebaseConfigured ? (
-            <div className="admin-tabbar">
-              <TabButton
-                active={mode === "signin"}
-                label="Sign In"
-                onClick={() => setMode("signin")}
-              />
-              <TabButton
-                active={mode === "register"}
-                label="Create Account"
-                onClick={() => setMode("register")}
-              />
-            </div>
-          ) : null}
+          <div className="admin-tabbar">
+            <TabButton active={mode === "signin"} label="Sign In" onClick={() => setMode("signin")} />
+            <TabButton
+              active={mode === "register"}
+              label="Create Account"
+              onClick={() => setMode("register")}
+            />
+          </div>
           <form className="studio-form" onSubmit={handleSubmit}>
-            {mode === "register" && firebaseConfigured ? (
+            {mode === "register" ? (
               <AdminField label="Full name">
                 <input
                   name="displayName"
@@ -359,7 +352,7 @@ export function LoginPageContent() {
                 value={password}
               />
             </AdminField>
-            {mode === "register" && firebaseConfigured ? (
+            {mode === "register" ? (
               <AdminField label="Confirm password">
                 <input
                   name="confirmPassword"
@@ -378,7 +371,7 @@ export function LoginPageContent() {
                   ? "Create Account"
                   : "Login"}
             </button>
-            {firebaseConfigured && mode === "signin" ? (
+            {mode === "signin" ? (
               <button
                 className="ghost-button"
                 disabled={isPending || !email}
@@ -397,15 +390,15 @@ export function LoginPageContent() {
   );
 }
 
-export function AdminPageContent() {
+export function StudioManagerContents({
+  embedded = false,
+  onClose,
+}: StudioManagerContentsProps) {
   const {
     contactMessages,
     content,
-    isAdmin,
-    isReady,
     registrations,
     restoreSeedContent,
-    session,
     updateContent,
     uploadImage,
     logout,
@@ -419,45 +412,6 @@ export function AdminPageContent() {
   useEffect(() => {
     setDraft(content);
   }, [content]);
-
-  if (!isReady) {
-    return (
-      <div className="page-shell">
-        <section className="locked-panel reveal">
-          <h1>Loading studio management</h1>
-          <p>Please wait a moment.</p>
-        </section>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return (
-      <div className="page-shell">
-        <section className="locked-panel reveal">
-          <h1>Studio management is restricted</h1>
-          <p>Please sign in with a studio management account to continue.</p>
-          <Link className="cta-button" href="/login">
-            Go to sign in
-          </Link>
-        </section>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="page-shell">
-        <section className="locked-panel reveal">
-          <h1>Studio management is restricted</h1>
-          <p>This account does not currently have access to studio management.</p>
-          <Link className="cta-button" href="/booking">
-            Back to classes
-          </Link>
-        </section>
-      </div>
-    );
-  }
 
   function setStyleOffering(index: number, nextStyle: StyleOffering) {
     setDraft((current) => ({
@@ -533,8 +487,7 @@ export function AdminPageContent() {
   }
 
   return (
-    <div className="page-shell">
-      <section className="admin-shell reveal">
+    <section className={`admin-shell ${embedded ? "studio-manager-shell studio-manager-shell--embedded" : "studio-manager-shell reveal"}`}>
         <div className="admin-topbar">
           <div>
             <span className="hero-eyebrow">Studio Management</span>
@@ -552,6 +505,7 @@ export function AdminPageContent() {
               className="ghost-button"
               onClick={() => {
                 void logout().then(() => {
+                  onClose?.();
                   router.push("/");
                 });
               }}
@@ -559,6 +513,11 @@ export function AdminPageContent() {
             >
               Log Out
             </button>
+            {onClose ? (
+              <button className="ghost-button" onClick={onClose} type="button">
+                Close
+              </button>
+            ) : null}
           </div>
         </div>
         {saveMessage ? <p className="admin-save-message">{saveMessage}</p> : null}
@@ -1520,6 +1479,54 @@ export function AdminPageContent() {
           </div>
         ) : null}
       </section>
+  );
+}
+
+export function AdminPageContent() {
+  const { isAdmin, isReady, session } = useStudio();
+
+  if (!isReady) {
+    return (
+      <div className="page-shell">
+        <section className="locked-panel reveal">
+          <h1>Loading studio management</h1>
+          <p>Please wait a moment.</p>
+        </section>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="page-shell">
+        <section className="locked-panel reveal">
+          <h1>Studio management is restricted</h1>
+          <p>Please sign in with a studio management account to continue.</p>
+          <Link className="cta-button" href="/login">
+            Go to sign in
+          </Link>
+        </section>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="page-shell">
+        <section className="locked-panel reveal">
+          <h1>Studio management is restricted</h1>
+          <p>This account does not currently have access to studio management.</p>
+          <Link className="cta-button" href="/booking">
+            Back to classes
+          </Link>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-shell">
+      <StudioManagerContents />
     </div>
   );
 }

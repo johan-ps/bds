@@ -115,11 +115,6 @@ export type StudioContent = {
   };
 };
 
-export const demoAdminCredentials = {
-  email: "admin@bollyfitstudio.com",
-  password: "bollyfit-preview",
-};
-
 export const primaryNavigation = [
   { label: "Classes", href: "/classes" },
   { label: "Schedule", href: "/schedule" },

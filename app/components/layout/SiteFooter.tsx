@@ -46,7 +46,6 @@ export function SiteFooter() {
               {item.label}
             </Link>
           ))}
-          {isAdmin ? <Link href="/admin">Studio Management</Link> : null}
           {isSignedIn ? <Link href="/logout">Logout</Link> : null}
         </div>
         <div className="footer-contact">

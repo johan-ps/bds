@@ -5,6 +5,7 @@ import "./globals.css";
 import { SiteFooter } from "./components/layout/SiteFooter";
 import { SiteHeader } from "./components/layout/SiteHeader";
 import { StudioProvider } from "./components/providers/StudioProvider";
+import { InlineStudioEditor } from "./components/site/InlineStudioEditor";
 import { RevealObserver } from "./components/ui/RevealObserver";
 
 const bodyFont = Urbanist({
@@ -42,6 +43,7 @@ export default function RootLayout({
             <RevealObserver />
             <SiteHeader />
             <main className="page">{children}</main>
+            <InlineStudioEditor />
             <SiteFooter />
           </div>
         </StudioProvider>

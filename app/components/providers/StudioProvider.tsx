@@ -35,16 +35,11 @@ import {
 } from "../../lib/studio-content";
 import {
   fileToDataUrl,
-  loadAdminSession,
-  loadContactMessages,
-  loadRegistrations,
   loadStudioContent,
   resetStudioContent,
   saveContactMessage,
   saveRegistration,
   saveStudioContent,
-  signInAdmin,
-  signOutAdmin,
 } from "../../lib/studio-storage";
 import type {
   AuthMode,
@@ -78,18 +73,6 @@ type StudioContextValue = {
 };
 
 const StudioContext = createContext<StudioContextValue | null>(null);
-
-function mapPreviewSession(previewSession: { email: string; signedInAt: string }): StudioSession {
-  return {
-    uid: "preview-admin",
-    email: previewSession.email,
-    displayName: "Preview Admin",
-    role: "admin",
-    authMode: "preview",
-    signedInAt: previewSession.signedInAt,
-    emailVerified: true,
-  };
-}
 
 function collectAssetIds(value: unknown, bucket = new Set<string>()) {
   if (typeof value === "string" && isAssetReference(value)) {
@@ -131,12 +114,6 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (nextSession.authMode === "preview") {
-      setRegistrations(loadRegistrations());
-      setContactMessages(loadContactMessages());
-      return;
-    }
-
     const hydratedSession = await ensureFreshFirebaseSession(nextSession);
 
     if (!hydratedSession) {
@@ -163,14 +140,6 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   async function requireSession(requiredRole?: "admin") {
     if (!session) {
       throw new Error("Please log in first.");
-    }
-
-    if (session.authMode === "preview") {
-      if (requiredRole === "admin" && session.role !== "admin") {
-        throw new Error("Admin access required.");
-      }
-
-      return session;
     }
 
     const refreshedSession = await ensureFreshFirebaseSession(session);
@@ -200,16 +169,14 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     async function initialize() {
       try {
         if (!firebaseConfigured) {
-          const previewSession = loadAdminSession();
-
           if (cancelled) {
             return;
           }
 
           setContent(loadStudioContent());
-          setRegistrations(loadRegistrations());
-          setContactMessages(loadContactMessages());
-          setSession(previewSession ? mapPreviewSession(previewSession) : null);
+          setRegistrations([]);
+          setContactMessages([]);
+          setSession(null);
           setIsReady(true);
           return;
         }
@@ -368,15 +335,12 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const nextSession = signInAdmin(email, password);
-    setSession(mapPreviewSession(nextSession));
-    setRegistrations(loadRegistrations());
-    setContactMessages(loadContactMessages());
+    throw new Error("Account access is not available right now.");
   }
 
   async function register(displayName: string, email: string, password: string) {
     if (!firebaseConfigured) {
-      throw new Error("Firebase is not configured for account registration.");
+      throw new Error("Account creation is not available right now.");
     }
 
     const nextSession = await registerWithFirebase(displayName, email, password);
@@ -386,7 +350,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
 
   async function sendPasswordReset(email: string) {
     if (!firebaseConfigured) {
-      throw new Error("Password reset is only available once Firebase is configured.");
+      throw new Error("Password reset is not available right now.");
     }
 
     await sendFirebasePasswordReset(email);
@@ -395,8 +359,6 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   async function logout() {
     if (firebaseConfigured) {
       clearStoredFirebaseSession();
-    } else {
-      signOutAdmin();
     }
 
     setSession(null);

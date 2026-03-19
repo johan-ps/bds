@@ -1,6 +1,6 @@
 "use client";
 
-import { demoAdminCredentials, seedStudioContent, type StudioContent } from "./studio-content";
+import { seedStudioContent, type StudioContent } from "./studio-content";
 import type {
   ContactSubmission,
   RegistrationSubmission,
@@ -9,12 +9,6 @@ import type {
 const CONTENT_KEY = "bds-studio-content";
 const REGISTRATIONS_KEY = "bds-registrations";
 const CONTACT_KEY = "bds-contact-messages";
-const ADMIN_SESSION_KEY = "bds-admin-session";
-
-export type AdminSession = {
-  email: string;
-  signedInAt: string;
-};
 
 function createId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -99,40 +93,6 @@ export function saveContactMessage(
   window.localStorage.setItem(CONTACT_KEY, JSON.stringify(nextMessages));
 
   return nextEntry;
-}
-
-export function loadAdminSession() {
-  if (typeof window === "undefined") return null;
-
-  return parseStoredJson<AdminSession | null>(
-    window.localStorage.getItem(ADMIN_SESSION_KEY),
-    null
-  );
-}
-
-export function signInAdmin(email: string, password: string) {
-  const normalizedEmail = email.trim().toLowerCase();
-
-  if (
-    normalizedEmail !== demoAdminCredentials.email ||
-    password !== demoAdminCredentials.password
-  ) {
-    throw new Error("Invalid preview credentials.");
-  }
-
-  const nextSession: AdminSession = {
-    email: normalizedEmail,
-    signedInAt: new Date().toISOString(),
-  };
-
-  window.localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(nextSession));
-
-  return nextSession;
-}
-
-export function signOutAdmin() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(ADMIN_SESSION_KEY);
 }
 
 export function fileToDataUrl(file: File) {

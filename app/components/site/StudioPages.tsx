@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition, type FormEvent, type ReactNode } from "react";
+import { useState, useTransition, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import type {
   EventPost,
   GalleryItem,
@@ -106,12 +106,12 @@ function SummitFeature() {
 
   return (
     <section className="summit-banner reveal">
-      <div>
+      <div className="summit-banner__copy">
         <span className="chip">{content.summitFeature.label}</span>
         <h2>{content.summitFeature.title}</h2>
         <p>{content.summitFeature.description}</p>
       </div>
-      <div>
+      <div className="summit-banner__aside">
         <p>{content.summitFeature.detail}</p>
         <LinkButton href={content.summitFeature.action.href}>
           {content.summitFeature.action.label}
@@ -128,11 +128,11 @@ function BrandPanel() {
         <img src="/logo.jpeg" alt="BollyFit Dance Studio full logo" className="cover-image" />
       </div>
       <div className="brand-panel__copy">
-        <span className="chip">Studio identity</span>
-        <h2>The full BollyFit brand stays visible, not just the small header mark.</h2>
+        <span className="chip">BollyFit identity</span>
+        <h2>A studio identity rooted in color, culture, and stage presence.</h2>
         <p>
-          This uses the actual uploaded studio logo so the site carries the real brand identity,
-          not just a simplified icon treatment.
+          BollyFit brings together South Asian cultural energy, performance confidence, and a
+          welcoming studio spirit that feels bold from the first impression.
         </p>
       </div>
     </section>
@@ -177,7 +177,10 @@ function StylesGrid({ limit }: { limit?: number }) {
 
 function ScheduleBoard({ schedule }: { schedule: ScheduleDay[] }) {
   return (
-    <div className="schedule-board">
+    <div
+      className="schedule-board"
+      style={{ "--schedule-columns": String(schedule.length) } as CSSProperties}
+    >
       {schedule.map((day) => (
         <article className="schedule-day" key={day.day}>
           <div className="schedule-day__header">
@@ -325,7 +328,7 @@ function StudioStoryPanel() {
         <SectionHeading
           eyebrow="The studio story"
           title={content.cultureStory.title}
-          copy="The brand should feel premium, but the studio itself still needs to feel warm, rooted, and easy to join."
+          copy="BollyFit brings together cultural pride, performance training, and a welcoming space for dancers of every age."
         />
         <div className="story-panel__text">
           {content.cultureStory.paragraphs.map((paragraph) => (
@@ -574,8 +577,8 @@ export function HomePageContent() {
       <section className="section-block reveal">
         <SectionHeading
           eyebrow="Class styles"
-          title="Training that feels dynamic from the first scroll"
-          copy="The visual direction is clean and premium, but the programming still needs to communicate range, energy, and cultural identity fast."
+          title="Training with range, rhythm, and stage energy"
+          copy="Explore Bollywood, Kuthu, Hiphop, Contemporary, and Fusion programs built for confidence, technique, and performance growth."
           action={<LinkButton href="/classes">View all programs</LinkButton>}
         />
         <StylesGrid limit={4} />
@@ -584,7 +587,7 @@ export function HomePageContent() {
         <SectionHeading
           eyebrow="Weekly rhythm"
           title="A schedule that is easy to scan and easy to join"
-          copy="Families and adult beginners should be able to understand the weekly rhythm without hunting for basic information."
+          copy="See class times, age groups, and levels at a glance so it is easy to find the right fit for your week."
           action={<LinkButton href="/booking">Claim a trial class</LinkButton>}
         />
         <ScheduleBoard schedule={content.schedule.slice(0, 4)} />
@@ -594,7 +597,7 @@ export function HomePageContent() {
         <SectionHeading
           eyebrow="Faculty"
           title="Instructors who can teach, perform, and direct"
-          copy="The site should communicate professionalism through faculty presentation, not just through generic marketing copy."
+          copy="Meet the choreographers and instructors guiding dancers from first steps to stage-ready performances."
           action={<LinkButton href="/instructors">Meet the full team</LinkButton>}
         />
         <InstructorGrid instructors={content.instructors.slice(0, 3)} />
@@ -603,7 +606,7 @@ export function HomePageContent() {
         <SectionHeading
           eyebrow="Recent activity"
           title="Community performances and major milestones"
-          copy="This is where the studio proves it is active, visible, and moving toward bigger stages."
+          copy="Follow recent performances, community appearances, and milestones from across the studio."
           action={<LinkButton href="/events">See all updates</LinkButton>}
         />
         <EventGrid events={content.events} />
@@ -660,7 +663,7 @@ export function ClassesPageContent() {
       <section className="section-block reveal">
         <SectionHeading
           title="Choose the style that matches your energy"
-          copy="The goal is not to overwhelm visitors with every possible detail. The goal is to make the difference between programs obvious and attractive."
+          copy="Each program brings its own rhythm while building confidence, musicality, and strong movement foundations."
         />
         <StylesGrid />
       </section>
@@ -668,7 +671,7 @@ export function ClassesPageContent() {
         <SectionHeading
           eyebrow="Membership options"
           title="Simple ways to get started"
-          copy="This gives prospective dancers a clear entry point before you decide on real pricing and billing rules."
+          copy="Choose a clear starting point and grow into the class path that best matches your goals."
         />
         <PackagesGrid packages={content.packages} />
       </section>
@@ -707,7 +710,7 @@ export function AboutPageContent() {
     <div className="page-shell">
       <PageHero
         eyebrow="About the studio"
-        title="BollyFit is built to celebrate culture in motion."
+        title="BollyFit celebrates culture in motion."
         copy="The studio story matters because families and dancers want to know what the place stands for, not just what classes it sells."
         image={content.gallery[4]?.image ?? content.hero.backgroundImage}
         primaryAction={<LinkButton href="/events">See recent milestones</LinkButton>}
@@ -756,8 +759,8 @@ export function SchedulePageContent() {
     <div className="page-shell">
       <PageHero
         eyebrow="Studio schedule"
-        title="Everything important is visible at a glance."
-        copy="The weekly board is intentionally structured so parents and adult dancers can make a decision quickly without opening a second page."
+        title="See the full week at a glance."
+        copy="Browse class times, age groups, and levels in one place so it is easy to plan your week."
         image={content.gallery[2]?.image ?? content.hero.spotlightImage}
         primaryAction={<LinkButton href="/booking">Register for a class</LinkButton>}
         secondaryAction={<LinkButton href="/contact" variant="secondary">Ask for help choosing</LinkButton>}
@@ -801,7 +804,7 @@ export function InstructorsPageContent() {
       <PageHero
         eyebrow="Faculty and choreography"
         title="A team that can teach beginners and shape performers."
-        copy="The studio feels more credible when the instructors are presented as specialists with clear strengths, not generic profile cards."
+        copy="Meet the artists and teachers shaping technique, confidence, and performance quality across the studio."
         image={content.gallery[1]?.image ?? content.hero.spotlightImage}
         primaryAction={<LinkButton href="/booking">Train with the team</LinkButton>}
         secondaryAction={<LinkButton href="/about" variant="secondary">Read the studio story</LinkButton>}
@@ -824,8 +827,8 @@ export function EventsPageContent() {
     <div className="page-shell">
       <PageHero
         eyebrow="Recent events and studio activity"
-        title="The studio should always feel alive."
-        copy="This page gives you a dedicated place to post milestones, showcase activity, and show momentum to families, dancers, and event partners."
+        title="A studio community that stays active and visible."
+        copy="Follow performance milestones, community appearances, showcases, and special moments from the BollyFit journey."
         image={content.gallery[5]?.image ?? content.hero.backgroundImage}
         primaryAction={<LinkButton href="/contact">Book the studio</LinkButton>}
         secondaryAction={<LinkButton href="/booking" variant="secondary">Join a class</LinkButton>}
@@ -849,7 +852,7 @@ export function GalleryPageContent() {
     <div className="page-shell">
       <PageHero
         eyebrow="Photo gallery"
-        title="A visual mood that makes people want to keep scrolling."
+        title="Moments from rehearsals, performances, and studio life."
         copy="A living visual story of classes, showcases, rehearsals, and stage moments."
         image={content.hero.backgroundImage}
         primaryAction={<LinkButton href="/booking">Register today</LinkButton>}
@@ -858,7 +861,7 @@ export function GalleryPageContent() {
       <section className="section-block reveal">
         <SectionHeading
           title="Recent studio imagery"
-          copy="Use this area for class photos, event highlights, performance stills, rehearsal moments, or campaign visuals."
+          copy="Explore class photos, event highlights, rehearsal moments, and stage energy from the studio community."
         />
         <GalleryGrid gallery={content.gallery} />
       </section>
@@ -878,7 +881,7 @@ export function BookingPageContent() {
       <PageHero
         eyebrow="Class registration"
         title="Register in one step and let the studio guide the rest."
-        copy="This page is designed to convert. It keeps pricing simple, gives enough reassurance, and captures the details the studio actually needs."
+        copy="Share a few details and the studio will help guide you toward the right class, level, or trial."
         image={content.gallery[3]?.image ?? content.hero.spotlightImage}
       />
       <section className="section-block reveal">

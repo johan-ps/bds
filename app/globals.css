@@ -232,7 +232,8 @@ summary:focus-visible {
 .cta-button,
 .ghost-button,
 .admin-tab,
-.upload-button {
+.upload-button,
+.inline-editor-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -252,7 +253,8 @@ summary:focus-visible {
 }
 
 .cta,
-.cta-button {
+.cta-button,
+.inline-editor-toggle {
   border: 0;
   background: linear-gradient(135deg, var(--accent-gold), var(--accent-coral));
   color: #16110e;
@@ -260,7 +262,8 @@ summary:focus-visible {
 }
 
 .cta:hover,
-.cta-button:hover {
+.cta-button:hover,
+.inline-editor-toggle:hover {
   transform: translateY(-2px);
   filter: brightness(1.02);
   box-shadow: 0 22px 46px rgba(255, 110, 103, 0.28);
@@ -590,6 +593,33 @@ summary:focus-visible {
   align-items: start;
 }
 
+.summit-banner__copy,
+.summit-banner__aside {
+  display: grid;
+  align-content: start;
+}
+
+.summit-banner__copy {
+  gap: 16px;
+}
+
+.summit-banner__aside {
+  gap: 24px;
+  justify-items: start;
+}
+
+.summit-banner__copy p,
+.summit-banner__aside p,
+.brand-panel__copy p {
+  margin: 0;
+}
+
+.summit-banner__aside .cta,
+.summit-banner__aside .cta-button {
+  margin-top: 4px;
+  justify-self: start;
+}
+
 .brand-panel {
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
   align-items: center;
@@ -733,26 +763,49 @@ summary:focus-visible {
 }
 
 .schedule-board {
+  --schedule-columns: 7;
   display: grid;
-  gap: 18px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(var(--schedule-columns), minmax(0, 1fr));
+  gap: clamp(10px, 1vw, 18px);
+  align-items: start;
 }
 
 .schedule-day {
   display: grid;
-  gap: 16px;
-  padding: 22px;
-  border-radius: var(--radius-md);
+  grid-template-rows: auto 1fr;
+  gap: 14px;
+  min-width: 0;
+  height: 100%;
+  padding: 18px;
+  border-radius: 24px;
   border: 1px solid var(--border);
-  background: rgba(13, 16, 23, 0.88);
+  background:
+    linear-gradient(180deg, rgba(20, 24, 34, 0.94) 0%, rgba(10, 13, 19, 0.92) 100%);
   box-shadow: var(--shadow);
+  overflow: hidden;
+  position: relative;
+}
+
+.schedule-day::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(98, 214, 219, 0.4), transparent 62%);
 }
 
 .schedule-day__header {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
+  min-width: 0;
+}
+
+.schedule-day__header h3 {
+  font-size: clamp(1.1rem, 1.2vw, 1.45rem);
+  line-height: 1.08;
 }
 
 .schedule-day__header span,
@@ -761,23 +814,64 @@ summary:focus-visible {
   color: var(--muted);
 }
 
+.schedule-day__header span {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
 .schedule-day__list {
   display: grid;
-  gap: 14px;
+  gap: 10px;
+  align-content: start;
+  min-width: 0;
 }
 
 .schedule-session {
   display: grid;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 12px 13px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .schedule-session__time {
   font-weight: 700;
   color: #f9d9b3;
+  font-size: 1rem;
+}
+
+.schedule-session strong,
+.schedule-session p,
+.schedule-session small {
+  min-width: 0;
+}
+
+.schedule-session strong {
+  display: block;
+  font-size: 0.98rem;
+  line-height: 1.22;
+}
+
+.schedule-session p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.schedule-session small {
+  display: block;
+  font-size: 0.9rem;
+  line-height: 1.3;
 }
 
 .instructor-grid,
@@ -1189,6 +1283,53 @@ summary:focus-visible {
   gap: 14px;
 }
 
+.inline-editor-toggle {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 70;
+}
+
+.inline-editor-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  align-items: stretch;
+}
+
+.inline-editor-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(4, 6, 10, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+.inline-editor-drawer {
+  position: relative;
+  margin-left: auto;
+  width: min(760px, 100vw);
+  height: 100%;
+  overflow-y: auto;
+  padding: 22px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(circle at top, rgba(255, 110, 103, 0.08), transparent 32%),
+    rgba(8, 11, 16, 0.96);
+  box-shadow: -28px 0 80px rgba(0, 0, 0, 0.42);
+}
+
+.studio-manager-shell--embedded {
+  min-height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
 .footer {
   margin-top: 40px;
   padding: 42px 0 28px;
@@ -1273,6 +1414,33 @@ summary:focus-visible {
   .footer-shell {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .schedule-board {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    padding: 2px 14px 10px 2px;
+    scroll-snap-type: x proximity;
+  }
+
+  .schedule-board::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .schedule-board::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+  }
+
+  .schedule-day {
+    flex: 0 0 min(300px, 72vw);
+    margin-right: -18px;
+    scroll-snap-align: start;
+  }
+
+  .schedule-day:last-child {
+    margin-right: 0;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1299,6 +1467,15 @@ summary:focus-visible {
   .gallery-card,
   .gallery-card--large {
     grid-column: span 12;
+  }
+
+  .schedule-day {
+    flex-basis: min(290px, 80vw);
+    margin-right: -22px;
+  }
+
+  .inline-editor-drawer {
+    width: min(100vw, 680px);
   }
 }
 
@@ -1360,6 +1537,32 @@ summary:focus-visible {
 
   .instructor-card {
     grid-template-rows: 280px minmax(280px, 1fr);
+  }
+
+  .schedule-day {
+    flex-basis: min(280px, 86vw);
+    margin-right: -26px;
+    padding: 16px;
+  }
+
+  .schedule-day__header {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .schedule-day__header span {
+    white-space: normal;
+  }
+
+  .inline-editor-toggle {
+    right: 14px;
+    bottom: 14px;
+    padding: 12px 18px;
+  }
+
+  .inline-editor-drawer {
+    width: 100vw;
+    padding: 14px;
   }
 }
 

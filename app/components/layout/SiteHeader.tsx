@@ -1,16 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   primaryNavigation,
   utilityNavigation,
 } from "../../lib/studio-content";
+import { STUDIO_MANAGER_TOGGLE_EVENT } from "../../lib/studio-manager";
 import { useStudio } from "../providers/StudioProvider";
 import { LinkButton } from "../ui/LinkButton";
 
 export function SiteHeader() {
+  const pathname = usePathname();
   const { isAdmin, session } = useStudio();
   const isSignedIn = Boolean(session);
+  const showInlineManager = isAdmin && pathname !== "/admin" && pathname !== "/login" && pathname !== "/logout";
   const utilityLinks = utilityNavigation.filter(
     (item) => !(item.href === "/login" && isSignedIn)
   );
@@ -49,7 +53,6 @@ export function SiteHeader() {
             {isSignedIn ? (
               <>
                 <div className="mobile-nav-divider" />
-                {isAdmin ? <Link href="/admin">Admin Dashboard</Link> : null}
                 <Link href="/logout">Logout</Link>
               </>
             ) : null}
@@ -58,13 +61,7 @@ export function SiteHeader() {
         <div className="header-actions">
           {isSignedIn ? (
             <>
-              {isAdmin ? (
-                <Link className="header-link" href="/admin">
-                  Dashboard
-                </Link>
-              ) : (
-                <span className="header-link header-link--static">{session?.email}</span>
-              )}
+              <span className="header-link header-link--static">{session?.email}</span>
               <Link className="header-link" href="/logout">
                 Logout
               </Link>
@@ -74,9 +71,17 @@ export function SiteHeader() {
               Login
             </Link>
           )}
-          <LinkButton href={isAdmin ? "/admin" : "/booking"}>
-            {isAdmin ? "Manage Studio" : "Register Now"}
-          </LinkButton>
+          {showInlineManager ? (
+            <button
+              className="cta-button"
+              onClick={() => window.dispatchEvent(new Event(STUDIO_MANAGER_TOGGLE_EVENT))}
+              type="button"
+            >
+              Manage Studio
+            </button>
+          ) : (
+            <LinkButton href="/booking">Register Now</LinkButton>
+          )}
         </div>
       </div>
     </header>
