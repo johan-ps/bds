@@ -1,46 +1,71 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
+import {
+  primaryNavigation,
+  utilityNavigation,
+} from "../../lib/studio-content";
+import { useStudio } from "../providers/StudioProvider";
 
 export function SiteFooter() {
+  const { content, isAdmin, session } = useStudio();
+  const isSignedIn = Boolean(session);
+  const utilityLinks = utilityNavigation.filter(
+    (item) => !(item.href === "/login" && isSignedIn)
+  );
+
   return (
     <footer className="footer">
-      <div className="container footer-grid">
-        <div>
+      <div className="container footer-shell">
+        <div className="footer-brand">
           <div className="logo">
-            <Image src="/logo.jpeg" alt="Bollyfit Dance Studio logo" width={44} height={44} />
-            <span>BDS</span>
+            <img alt="BollyFit Dance Studio logo" className="logo-mark" src="/logo.jpeg" />
+            <div className="logo-copy">
+              <span>BollyFit Dance Studio</span>
+              <small>Fitness Through Dance</small>
+            </div>
           </div>
-          <p>Fitness through dance. Culture, community, confidence.</p>
+          <p>
+            A modern cultural dance school built around movement, confidence, and South Asian
+            performance energy.
+          </p>
+          <p>{content.contact.serviceArea}</p>
         </div>
-        <div>
-          <strong>Studio</strong>
-          <p>Open daily 6am - 10pm</p>
-          <p>hello@bollyfitdancestudio.com</p>
-          <p>(555) 010-2233</p>
-        </div>
-        <div>
+        <div className="footer-links">
           <strong>Explore</strong>
-          <p>
-            <Link href="/schedule">Class Schedule</Link>
-          </p>
-          <p>
-            <Link href="/about">About BDS</Link>
-          </p>
-          <p>
-            <Link href="/gallery">Gallery</Link>
-          </p>
-          <p>
-            <Link href="/booking">Book a Session</Link>
-          </p>
-          <p>
-            <Link href="/contact">Contact Us</Link>
-          </p>
+          {primaryNavigation.map((item) => (
+            <Link href={item.href} key={item.href}>
+              {item.label}
+            </Link>
+          ))}
         </div>
-        <div>
-          <strong>Social</strong>
-          <p>@bollyfitdancestudio</p>
-          <p>Instagram · TikTok · YouTube</p>
+        <div className="footer-links">
+          <strong>Studio</strong>
+          {utilityLinks.map((item) => (
+            <Link href={item.href} key={item.href}>
+              {item.label}
+            </Link>
+          ))}
+          {isAdmin ? <Link href="/admin">Studio Management</Link> : null}
+          {isSignedIn ? <Link href="/logout">Logout</Link> : null}
         </div>
+        <div className="footer-contact">
+          <strong>Connect</strong>
+          <a href={`mailto:${content.contact.email}`}>{content.contact.email}</a>
+          <a href={`tel:${content.contact.phone.replace(/[^0-9+]/g, "")}`}>{content.contact.phone}</a>
+          <a
+            href="https://www.instagram.com/bollyfit_dance_studio/"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {content.contact.instagram}
+          </a>
+          <span>{content.contact.youtube}</span>
+        </div>
+      </div>
+      <div className="container footer-bottom">
+        <span>Fitness Through Dance.</span>
+        <span>{new Date().getFullYear()} BollyFit Dance Studio</span>
       </div>
     </footer>
   );

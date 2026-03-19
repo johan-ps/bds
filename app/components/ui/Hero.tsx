@@ -6,5 +6,5 @@ type HeroProps = {
 };
 
 export function Hero({ children, className }: HeroProps) {
-  return <section className={["hero", className].filter(Boolean).join(" ")}>{children}</section>;
+  return <div className={["hero", className].filter(Boolean).join(" ")}>{children}</div>;
 }

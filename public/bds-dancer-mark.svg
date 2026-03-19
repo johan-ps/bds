@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="BollyFit dancer mark">
+  <rect width="256" height="256" rx="44" fill="#020202" />
+  <defs>
+    <linearGradient id="warm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd54a" />
+      <stop offset="100%" stop-color="#ff8a00" />
+    </linearGradient>
+    <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c2ff4d" />
+      <stop offset="100%" stop-color="#16b764" />
+    </linearGradient>
+    <linearGradient id="cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#51f6d8" />
+      <stop offset="100%" stop-color="#1f88ff" />
+    </linearGradient>
+    <linearGradient id="pink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff5ab1" />
+      <stop offset="100%" stop-color="#7f3dff" />
+    </linearGradient>
+  </defs>
+  <circle cx="132" cy="54" r="20" fill="url(#warm)" />
+  <polygon points="102,72 136,64 162,90 148,126 116,122 96,96" fill="url(#warm)" />
+  <polygon points="72,80 102,72 92,100 58,94 38,74 44,62" fill="url(#green)" />
+  <polygon points="162,90 214,86 222,100 182,120 148,126" fill="url(#cyan)" />
+  <polygon points="116,122 148,126 150,182 108,196 72,164 80,134" fill="url(#pink)" />
+  <polygon points="80,134 108,196 74,202 46,170 56,144" fill="#ff5c9b" />
+  <polygon points="148,126 182,120 188,154 162,206 142,194 150,182" fill="#1aa5ff" />
+  <polygon points="64,202 88,194 100,210 70,220 56,214" fill="#ffb04d" />
+  <polygon points="150,206 166,196 184,208 158,220 144,216" fill="#ffd54a" />
+</svg>

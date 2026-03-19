@@ -1,5 +1,3 @@
-import { pexels } from "../lib/images";
-
 export const values = [
   {
     title: "Cultural Storytelling",
@@ -14,8 +12,3 @@ export const values = [
     description: "A welcoming space for every dancer.",
   },
 ];
-
-export const aboutHeroImage = {
-  src: pexels("33313004", 1200),
-  alt: "Traditional festival dance performance",
-};

@@ -1,5 +1,15 @@
 import { pexels } from "../lib/images";
 
+export const hero = {
+  title: "Where Movement Becomes Emotion",
+  subtitle: "Indian & Sri Lankan dance studio blending culture and modern training.",
+};
+
+export const heroQuotes = [
+  "“Dancing here feels like becoming part of an artwork.”",
+  "“I found my confidence and creativity in every session.”",
+];
+
 export const stats = [
   { label: "Weekly Classes", value: "45+" },
   { label: "Active Members", value: "1.2K" },
@@ -7,39 +17,57 @@ export const stats = [
   { label: "Years", value: "10" },
 ];
 
-export const danceStyles = ["Semiclassical", "Bollywood", "Hiphop", "Kuthu", "Contemporary"];
-
-export const highlights = [
+export const classTiles = [
   {
-    title: "Indian & Sri Lankan Roots",
-    description: "Classical grace, cinema energy, island rhythm.",
+    title: "Semiclassical",
+    subtitle: "Grace, precision, storytelling.",
+    image: pexels("1738986", 900),
+    tag: "Technique",
   },
   {
-    title: "Fitness with Culture",
-    description: "Cardio, strength, and technique in one class.",
+    title: "Bollywood",
+    subtitle: "Cinematic energy and expression.",
+    image: pexels("175658", 900),
+    tag: "Performance",
   },
   {
-    title: "Community First",
-    description: "Supportive coaching for every level.",
+    title: "Hiphop",
+    subtitle: "Power, rhythm, flow.",
+    image: pexels("358042", 900),
+    tag: "Groove",
+  },
+  {
+    title: "Kuthu",
+    subtitle: "Festival footwork and stamina.",
+    image: pexels("1701193", 900),
+    tag: "Energy",
+  },
+  {
+    title: "Contemporary",
+    subtitle: "Fluid movement and emotion.",
+    image: pexels("1190297", 900),
+    tag: "Expression",
+  },
+  {
+    title: "Fusion",
+    subtitle: "Blending styles for modern sets.",
+    image: pexels("1190298", 900),
+    tag: "New",
   },
 ];
 
-export const programs = [
+export const programHighlights = [
   {
     title: "Bollyfit Burn",
-    description: "Cardio + strength with Bollywood hits.",
+    description: "High-energy cardio with Bollywood beats.",
   },
   {
     title: "Semiclassical Flow",
-    description: "Graceful lines, mudras, and control.",
+    description: "Controlled lines, mudras, and balance.",
   },
   {
     title: "Kuthu Power",
-    description: "Explosive footwork and festival energy.",
-  },
-  {
-    title: "Contemporary Fusion",
-    description: "Fluid movement and modern storytelling.",
+    description: "Explosive footwork and festival stamina.",
   },
 ];
 
@@ -55,23 +83,5 @@ export const testimonials = [
   {
     name: "Meera L.",
     quote: "Joyful workouts with real results.",
-  },
-];
-
-export const heroImages = [
-  {
-    src: pexels("34717625", 1200),
-    alt: "Bharatanatyam dancer on stage",
-    className: "large floaty",
-  },
-  {
-    src: pexels("31880368", 900),
-    alt: "Classical dancer by the sea",
-    className: "tall",
-  },
-  {
-    src: pexels("34473000", 900),
-    alt: "Traditional dancer at a temple",
-    className: "wide",
   },
 ];

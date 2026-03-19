@@ -1,5 +1,3 @@
-import { pexels } from "../lib/images";
-
 export const schedule = [
   {
     day: "Monday",
@@ -51,8 +49,3 @@ export const schedule = [
     ],
   },
 ];
-
-export const scheduleHeroImage = {
-  src: pexels("34473000", 1200),
-  alt: "Traditional dancer in motion",
-};

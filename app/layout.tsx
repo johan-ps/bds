@@ -1,39 +1,50 @@
 import type { Metadata } from "next";
-import { Bebas_Neue, Manrope } from "next/font/google";
+import { Syne, Urbanist } from "next/font/google";
+import type { ReactNode } from "react";
 import "./globals.css";
 import { SiteFooter } from "./components/layout/SiteFooter";
 import { SiteHeader } from "./components/layout/SiteHeader";
+import { StudioProvider } from "./components/providers/StudioProvider";
+import { RevealObserver } from "./components/ui/RevealObserver";
 
-const bodyFont = Manrope({
+const bodyFont = Urbanist({
   variable: "--font-body",
   subsets: ["latin"],
 });
 
-const displayFont = Bebas_Neue({
+const displayFont = Syne({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["500", "700"],
 });
 
 export const metadata: Metadata = {
   title: "Bollyfit Dance Studio",
   description:
-    "Bollyfit Dance Studio offers Bollywood-inspired dance fitness, workshops, and private sessions across our locations.",
+    "Bollyfit Dance Studio is a modern cultural dance school offering Bollywood, Kuthu, Hiphop, Contemporary, and Fusion training with classes, events, gallery, and admin-managed content.",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "64x64" }],
+    shortcut: "/favicon.png",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en">
       <body className={`${bodyFont.variable} ${displayFont.variable} antialiased`}>
-        <div className="app-shell">
-          <SiteHeader />
-          <main className="page">{children}</main>
-          <SiteFooter />
-        </div>
+        <StudioProvider>
+          <div className="app-shell">
+            <RevealObserver />
+            <SiteHeader />
+            <main className="page">{children}</main>
+            <SiteFooter />
+          </div>
+        </StudioProvider>
       </body>
     </html>
   );

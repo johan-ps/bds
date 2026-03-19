@@ -1,5 +1,3 @@
-import { pexels } from "../lib/images";
-
 export const locations = [
   {
     name: "Downtown Studio",
@@ -26,8 +24,3 @@ export const locations = [
     features: ["Kids studio", "Workshops", "On-site parking"],
   },
 ];
-
-export const locationsHeroImage = {
-  src: pexels("34717651", 1200),
-  alt: "Traditional dancer performing",
-};

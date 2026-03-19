@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BollyFit Dance Studio
 
-## Getting Started
+Modern Next.js studio site with a polished public marketing experience, class inquiry forms, and a role-aware dashboard.
 
-First, run the development server:
+## Current behavior
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Public pages:
+  - `/`
+  - `/classes`
+  - `/schedule`
+  - `/instructors`
+  - `/events`
+  - `/gallery`
+  - `/about`
+  - `/booking`
+  - `/contact`
+- Account pages:
+  - `/login`
+  - `/logout`
+- Admin page:
+  - `/admin`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app now supports two modes:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Firebase mode
+   - Real email/password sign in and account creation
+   - Firestore-backed content, leads, and uploaded images
+   - Admin access based on an approved Firestore record
+2. Preview fallback mode
+   - Used automatically when Firebase env vars are missing
+   - Keeps the old browser-only preview working for local design/testing
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Firebase architecture
 
-## Learn More
+This implementation uses Firebase through the REST APIs instead of the Firebase JS SDK. That keeps the code deployable in the current repo without adding packages.
 
-To learn more about Next.js, take a look at the following resources:
+Collections and documents:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `siteContent/default`
+  - Main editable studio content object
+- `assets/{assetId}`
+  - Uploaded image payloads stored as compressed data URLs
+- `registrations/{registrationId}`
+  - Booking form submissions
+- `contactMessages/{messageId}`
+  - Contact form submissions
+- `users/{uid}`
+  - Basic account profile and last login tracking
+- `adminEmails/{email}`
+  - Admin allowlist. If the signed-in email has a document here, the UI unlocks admin tools
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Setup
 
-## Deploy on Vercel
+1. Create a Firebase project.
+2. Enable Email/Password under Firebase Authentication.
+3. Create a Firestore database in production mode.
+4. Apply the rules from [firebase/firestore.rules](/Users/johan_ps/Documents/Automation/bds/firebase/firestore.rules).
+5. Copy [.env.example](/Users/johan_ps/Documents/Automation/bds/.env.example) to `.env.local`.
+6. Fill in:
+   - `NEXT_PUBLIC_FIREBASE_API_KEY`
+   - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+7. Start the app and open `/login`.
+8. Create the first account from the login page or from Firebase Auth.
+9. In Firestore, add a document in `adminEmails` using the exact email address as the document ID.
+10. Put `{ "active": true }` in that document.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Once that document exists, the next sign-in for that email will unlock `/admin`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Preview fallback
+
+If Firebase is not configured, the app falls back to the old local preview mode.
+
+Preview admin credentials:
+
+- Email: `admin@bollyfitstudio.com`
+- Password: `bollyfit-preview`
+
+In preview mode, content edits, uploads, registrations, and messages are stored only in the current browser.
+
+## Notes
+
+- Uploaded images are compressed in the browser before being written to Firestore.
+- Sample dance imagery is still used throughout the seed content.
+- There is a legacy SQL schema under `db/` that is not connected to this site flow.
+- Because this shell still has no `node` or package manager binaries available, build verification was not possible here.
