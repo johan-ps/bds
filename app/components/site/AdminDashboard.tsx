@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import {
   seedStudioContent,
   type EventPost,
@@ -43,6 +43,24 @@ function linesToList(value: string) {
     .split("\n")
     .map((entry) => entry.trim())
     .filter(Boolean);
+}
+
+function collectManagedImageReferences(value: unknown, bucket = new Set<string>()) {
+  if (typeof value === "string" && value.startsWith("asset://")) {
+    bucket.add(value);
+    return bucket;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((entry) => collectManagedImageReferences(entry, bucket));
+    return bucket;
+  }
+
+  if (value && typeof value === "object") {
+    Object.values(value).forEach((entry) => collectManagedImageReferences(entry, bucket));
+  }
+
+  return bucket;
 }
 
 function TabButton({
@@ -397,6 +415,7 @@ export function StudioManagerContents({
   const {
     contactMessages,
     content,
+    deleteImageAsset,
     registrations,
     restoreSeedContent,
     updateContent,
@@ -408,9 +427,20 @@ export function StudioManagerContents({
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [saveMessage, setSaveMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+  const draftRef = useRef(draft);
+  const contentRef = useRef(content);
+  const stagedUploadRefsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     setDraft(content);
+  }, [content]);
+
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+
+  useEffect(() => {
+    contentRef.current = content;
   }, [content]);
 
   function setStyleOffering(index: number, nextStyle: StyleOffering) {
@@ -458,7 +488,10 @@ export function StudioManagerContents({
   function handleSave() {
     startTransition(async () => {
       try {
+        const persistedContent = contentRef.current;
         await updateContent(draft);
+        await cleanupTransientUploads(draft, persistedContent);
+        syncStagedUploadsWithSavedContent(draft);
         setSaveMessage("Changes saved.");
       } catch (error) {
         setSaveMessage(error instanceof Error ? error.message : "Unable to save changes.");
@@ -469,7 +502,9 @@ export function StudioManagerContents({
   function handleRestoreSeed() {
     startTransition(async () => {
       try {
+        const persistedContent = contentRef.current;
         await restoreSeedContent();
+        await cleanupTransientUploads(seedStudioContent, persistedContent);
         setDraft(seedStudioContent);
         setSaveMessage("Studio content restored.");
       } catch (error) {
@@ -478,13 +513,120 @@ export function StudioManagerContents({
     });
   }
 
+  async function cleanupTransientUploads(
+    nextDraft: StudioContent,
+    persistedValue: StudioContent = contentRef.current
+  ) {
+    const persistedRefs = collectManagedImageReferences(persistedValue);
+    const nextRefs = collectManagedImageReferences(nextDraft);
+    const stagedRefs = [...stagedUploadRefsRef.current];
+
+    if (!stagedRefs.length) {
+      return;
+    }
+
+    const removableRefs = stagedRefs.filter(
+      (assetRef) => !persistedRefs.has(assetRef) && !nextRefs.has(assetRef)
+    );
+
+    if (!removableRefs.length) {
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      removableRefs.map(async (assetRef) => {
+        await deleteImageAsset(assetRef);
+        return assetRef;
+      })
+    );
+
+    results.forEach((result) => {
+      if (result.status === "fulfilled") {
+        stagedUploadRefsRef.current.delete(result.value);
+      }
+    });
+  }
+
+  async function cleanupDiscardedTransientUploads(
+    persistedValue: StudioContent = contentRef.current
+  ) {
+    const persistedRefs = collectManagedImageReferences(persistedValue);
+    const stagedRefs = [...stagedUploadRefsRef.current];
+
+    if (!stagedRefs.length) {
+      return;
+    }
+
+    const removableRefs = stagedRefs.filter((assetRef) => !persistedRefs.has(assetRef));
+
+    if (!removableRefs.length) {
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      removableRefs.map(async (assetRef) => {
+        await deleteImageAsset(assetRef);
+        return assetRef;
+      })
+    );
+
+    results.forEach((result) => {
+      if (result.status === "fulfilled") {
+        stagedUploadRefsRef.current.delete(result.value);
+      }
+    });
+  }
+
+  function syncStagedUploadsWithSavedContent(nextContent: StudioContent) {
+    const persistedRefs = collectManagedImageReferences(nextContent);
+
+    [...stagedUploadRefsRef.current].forEach((assetRef) => {
+      if (persistedRefs.has(assetRef)) {
+        stagedUploadRefsRef.current.delete(assetRef);
+      }
+    });
+  }
+
+  async function applyImageValue(
+    nextImage: string,
+    updater: (current: StudioContent, nextImage: string) => StudioContent
+  ) {
+    if (nextImage.startsWith("asset://")) {
+      stagedUploadRefsRef.current.add(nextImage);
+    }
+
+    let nextDraftSnapshot = draftRef.current;
+
+    setDraft((current) => {
+      const nextDraft = updater(current, nextImage);
+      nextDraftSnapshot = nextDraft;
+      return nextDraft;
+    });
+
+    draftRef.current = nextDraftSnapshot;
+    await cleanupTransientUploads(nextDraftSnapshot);
+  }
+
+  function setImageValue(
+    nextImage: string,
+    updater: (current: StudioContent, nextImage: string) => StudioContent
+  ) {
+    void applyImageValue(nextImage, updater);
+  }
+
   async function setUploadedImage(
-    onComplete: (imageUrl: string) => void,
+    updater: (current: StudioContent, nextImage: string) => StudioContent,
     file: File
   ) {
     const nextImage = await uploadImage(file);
-    onComplete(nextImage);
+    await applyImageValue(nextImage, updater);
   }
+
+  useEffect(() => {
+    return () => {
+      void cleanupDiscardedTransientUploads(contentRef.current);
+    };
+  }, []);
 
   return (
     <section className={`admin-shell ${embedded ? "studio-manager-shell studio-manager-shell--embedded" : "studio-manager-shell reveal"}`}>
@@ -628,18 +770,17 @@ export function StudioManagerContents({
                 label="Hero background image"
                 image={draft.hero.backgroundImage}
                 onChange={(value) =>
-                  setDraft((current) => ({
+                  setImageValue(value, (current, nextImage) => ({
                     ...current,
-                    hero: { ...current.hero, backgroundImage: value },
+                    hero: { ...current.hero, backgroundImage: nextImage },
                   }))
                 }
                 onUpload={(file) =>
                   setUploadedImage(
-                    (imageUrl) =>
-                      setDraft((current) => ({
-                        ...current,
-                        hero: { ...current.hero, backgroundImage: imageUrl },
-                      })),
+                    (current, nextImage) => ({
+                      ...current,
+                      hero: { ...current.hero, backgroundImage: nextImage },
+                    }),
                     file
                   )
                 }
@@ -648,18 +789,17 @@ export function StudioManagerContents({
                 label="Hero spotlight image"
                 image={draft.hero.spotlightImage}
                 onChange={(value) =>
-                  setDraft((current) => ({
+                  setImageValue(value, (current, nextImage) => ({
                     ...current,
-                    hero: { ...current.hero, spotlightImage: value },
+                    hero: { ...current.hero, spotlightImage: nextImage },
                   }))
                 }
                 onUpload={(file) =>
                   setUploadedImage(
-                    (imageUrl) =>
-                      setDraft((current) => ({
-                        ...current,
-                        hero: { ...current.hero, spotlightImage: imageUrl },
-                      })),
+                    (current, nextImage) => ({
+                      ...current,
+                      hero: { ...current.hero, spotlightImage: nextImage },
+                    }),
                     file
                   )
                 }
@@ -842,10 +982,28 @@ export function StudioManagerContents({
                 <ImageUploadField
                   label="Image"
                   image={style.image}
-                  onChange={(value) => setStyleOffering(index, { ...style, image: value })}
+                  onChange={(value) =>
+                    setImageValue(value, (current, nextImage) => ({
+                      ...current,
+                      styleOfferings: updateItem(current.styleOfferings, index, (currentStyle) => ({
+                        ...currentStyle,
+                        image: nextImage,
+                      })),
+                    }))
+                  }
                   onUpload={(file) =>
                     setUploadedImage(
-                      (imageUrl) => setStyleOffering(index, { ...style, image: imageUrl }),
+                      (current, nextImage) => ({
+                        ...current,
+                        styleOfferings: updateItem(
+                          current.styleOfferings,
+                          index,
+                          (currentStyle) => ({
+                            ...currentStyle,
+                            image: nextImage,
+                          })
+                        ),
+                      }),
                       file
                     )
                   }
@@ -1102,10 +1260,28 @@ export function StudioManagerContents({
                 <ImageUploadField
                   label="Image"
                   image={instructor.image}
-                  onChange={(value) => setInstructor(index, { ...instructor, image: value })}
+                  onChange={(value) =>
+                    setImageValue(value, (current, nextImage) => ({
+                      ...current,
+                      instructors: updateItem(current.instructors, index, (currentInstructor) => ({
+                        ...currentInstructor,
+                        image: nextImage,
+                      })),
+                    }))
+                  }
                   onUpload={(file) =>
                     setUploadedImage(
-                      (imageUrl) => setInstructor(index, { ...instructor, image: imageUrl }),
+                      (current, nextImage) => ({
+                        ...current,
+                        instructors: updateItem(
+                          current.instructors,
+                          index,
+                          (currentInstructor) => ({
+                            ...currentInstructor,
+                            image: nextImage,
+                          })
+                        ),
+                      }),
                       file
                     )
                   }
@@ -1202,10 +1378,24 @@ export function StudioManagerContents({
                 <ImageUploadField
                   label="Image"
                   image={event.image}
-                  onChange={(value) => setEvent(index, { ...event, image: value })}
+                  onChange={(value) =>
+                    setImageValue(value, (current, nextImage) => ({
+                      ...current,
+                      events: updateItem(current.events, index, (currentEvent) => ({
+                        ...currentEvent,
+                        image: nextImage,
+                      })),
+                    }))
+                  }
                   onUpload={(file) =>
                     setUploadedImage(
-                      (imageUrl) => setEvent(index, { ...event, image: imageUrl }),
+                      (current, nextImage) => ({
+                        ...current,
+                        events: updateItem(current.events, index, (currentEvent) => ({
+                          ...currentEvent,
+                          image: nextImage,
+                        })),
+                      }),
                       file
                     )
                   }
@@ -1270,10 +1460,24 @@ export function StudioManagerContents({
                 <ImageUploadField
                   label="Image"
                   image={item.image}
-                  onChange={(value) => setGalleryItem(index, { ...item, image: value })}
+                  onChange={(value) =>
+                    setImageValue(value, (current, nextImage) => ({
+                      ...current,
+                      gallery: updateItem(current.gallery, index, (currentItem) => ({
+                        ...currentItem,
+                        image: nextImage,
+                      })),
+                    }))
+                  }
                   onUpload={(file) =>
                     setUploadedImage(
-                      (imageUrl) => setGalleryItem(index, { ...item, image: imageUrl }),
+                      (current, nextImage) => ({
+                        ...current,
+                        gallery: updateItem(current.gallery, index, (currentItem) => ({
+                          ...currentItem,
+                          image: nextImage,
+                        })),
+                      }),
                       file
                     )
                   }

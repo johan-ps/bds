@@ -6,15 +6,16 @@ import {
   primaryNavigation,
   utilityNavigation,
 } from "../../lib/studio-content";
-import { STUDIO_MANAGER_TOGGLE_EVENT } from "../../lib/studio-manager";
 import { useStudio } from "../providers/StudioProvider";
+import { useInlineStudioEditor } from "../site/InlineStudioEditor";
 import { LinkButton } from "../ui/LinkButton";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const { isAdmin, session } = useStudio();
+  const { canEdit, isEditing, toggleEditor } = useInlineStudioEditor();
   const isSignedIn = Boolean(session);
-  const showInlineManager = isAdmin && pathname !== "/admin" && pathname !== "/login" && pathname !== "/logout";
+  const showInlineManager = isAdmin && canEdit && pathname !== "/admin" && pathname !== "/login" && pathname !== "/logout";
   const utilityLinks = utilityNavigation.filter(
     (item) => !(item.href === "/login" && isSignedIn)
   );
@@ -74,14 +75,14 @@ export function SiteHeader() {
           {showInlineManager ? (
             <button
               className="cta-button"
-              onClick={() => window.dispatchEvent(new Event(STUDIO_MANAGER_TOGGLE_EVENT))}
+              onClick={toggleEditor}
               type="button"
             >
-              Manage Studio
+              {isEditing ? "Exit Editor" : "Manage Studio"}
             </button>
-          ) : (
+          ) : !isAdmin ? (
             <LinkButton href="/booking">Register Now</LinkButton>
-          )}
+          ) : null}
         </div>
       </div>
     </header>

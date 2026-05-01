@@ -10,6 +10,7 @@ import {
 } from "react";
 import {
   clearStoredFirebaseSession,
+  deleteFirebaseAsset,
   ensureFreshFirebaseSession,
   getAssetIdFromReference,
   isAssetReference,
@@ -69,6 +70,7 @@ type StudioContextValue = {
   sendPasswordReset: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   uploadImage: (file: File) => Promise<string>;
+  deleteImageAsset: (src: string) => Promise<void>;
   resolveImageUrl: (src: string) => string;
 };
 
@@ -92,6 +94,13 @@ function collectAssetIds(value: unknown, bucket = new Set<string>()) {
   return bucket;
 }
 
+function diffRemovedAssetIds(previousValue: unknown, nextValue: unknown) {
+  const previousAssetIds = collectAssetIds(previousValue);
+  const nextAssetIds = collectAssetIds(nextValue);
+
+  return [...previousAssetIds].filter((assetId) => !nextAssetIds.has(assetId));
+}
+
 export function StudioProvider({ children }: { children: ReactNode }) {
   const firebaseConfigured = isFirebaseConfigured();
   const authMode: AuthMode = firebaseConfigured ? "firebase" : "preview";
@@ -106,6 +115,68 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     assetMapRef.current = assetMap;
   }, [assetMap]);
+
+  function pruneAssetMap(assetIds: string[]) {
+    if (!assetIds.length) {
+      return;
+    }
+
+    setAssetMap((current) => {
+      const nextMap = { ...current };
+      let didChange = false;
+
+      assetIds.forEach((assetId) => {
+        if (assetId in nextMap) {
+          delete nextMap[assetId];
+          didChange = true;
+        }
+      });
+
+      return didChange ? nextMap : current;
+    });
+  }
+
+  async function deleteImageAsset(src: string) {
+    if (!firebaseConfigured || !isAssetReference(src)) {
+      return;
+    }
+
+    const nextSession = await requireSession("admin");
+    const assetId = getAssetIdFromReference(src);
+
+    await deleteFirebaseAsset(assetId, nextSession);
+    pruneAssetMap([assetId]);
+  }
+
+  async function cleanupRemovedAssets(assetIds: string[], nextSession: StudioSession) {
+    if (!assetIds.length) {
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      assetIds.map(async (assetId) => {
+        await deleteFirebaseAsset(assetId, nextSession);
+        return assetId;
+      })
+    );
+
+    const deletedAssetIds = results
+      .filter(
+        (result): result is PromiseFulfilledResult<string> => result.status === "fulfilled"
+      )
+      .map((result) => result.value);
+    const failedCount = results.length - deletedAssetIds.length;
+
+    pruneAssetMap(deletedAssetIds);
+
+    if (failedCount > 0) {
+      throw new Error(
+        failedCount === 1
+          ? "Changes saved, but one replaced image could not be cleared."
+          : "Changes saved, but some replaced images could not be cleared."
+      );
+    }
+  }
 
   async function loadAdminInbox(nextSession: StudioSession) {
     if (nextSession.role !== "admin") {
@@ -276,8 +347,11 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   async function updateContent(nextContent: StudioContent) {
     if (firebaseConfigured) {
       const nextSession = await requireSession("admin");
+      const removedAssetIds = diffRemovedAssetIds(content, nextContent);
+
       await saveFirebaseStudioContent(nextContent, nextSession);
       setContent(nextContent);
+      await cleanupRemovedAssets(removedAssetIds, nextSession);
       return;
     }
 
@@ -288,8 +362,11 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   async function restoreSeedContent() {
     if (firebaseConfigured) {
       const nextSession = await requireSession("admin");
+      const removedAssetIds = diffRemovedAssetIds(content, seedStudioContent);
+
       await restoreFirebaseSeedContent(nextSession);
       setContent(seedStudioContent);
+      await cleanupRemovedAssets(removedAssetIds, nextSession);
       return;
     }
 
@@ -409,6 +486,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     sendPasswordReset,
     logout,
     uploadImage,
+    deleteImageAsset,
     resolveImageUrl,
   };
 

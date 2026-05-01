@@ -1,7 +1,12 @@
 "use client";
-
-import Link from "next/link";
-import { useState, useTransition, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import {
+  useState,
+  useTransition,
+  type CSSProperties,
+  type FormEvent,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import type {
   EventPost,
   GalleryItem,
@@ -12,7 +17,40 @@ import type {
   Testimonial,
 } from "../../lib/studio-content";
 import { useStudio } from "../providers/StudioProvider";
+import {
+  useEditableElement,
+  useEditableStudioContent,
+  useInlineStudioEditor,
+  type InlineFieldSelection,
+} from "./InlineStudioEditor";
 import { LinkButton } from "../ui/LinkButton";
+
+type EditableTextTag =
+  | "span"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "p"
+  | "div"
+  | "strong"
+  | "small"
+  | "li"
+  | "summary";
+
+type EditableTextField = Extract<InlineFieldSelection, { kind: "text" }>;
+type EditableImageField = Extract<InlineFieldSelection, { kind: "image" }>;
+
+function readValueAtPath(source: unknown, path: string) {
+  return path.split(".").reduce<unknown>((currentValue, segment) => {
+    if (currentValue === null || currentValue === undefined) {
+      return undefined;
+    }
+
+    const parsedSegment = /^\d+$/.test(segment) ? Number(segment) : segment;
+
+    return (currentValue as Record<string, unknown> | unknown[])[parsedSegment as never];
+  }, source);
+}
 
 function SectionHeading({
   eyebrow,
@@ -20,9 +58,9 @@ function SectionHeading({
   copy,
   action,
 }: {
-  eyebrow?: string;
-  title: string;
-  copy?: string;
+  eyebrow?: ReactNode;
+  title: ReactNode;
+  copy?: ReactNode;
   action?: ReactNode;
 }) {
   return (
@@ -53,12 +91,240 @@ function ResolvedImage({
   return <img src={resolveImageUrl(src)} alt={alt} className={className} />;
 }
 
+function EditableText({
+  as,
+  children,
+  className,
+  field,
+}: {
+  as?: EditableTextTag;
+  children: ReactNode;
+  className?: string;
+  field: EditableTextField;
+}) {
+  const Tag = (as ?? "span") as EditableTextTag;
+  const { canEdit, content, isEditing, selectedField, selectField, updateTextField } =
+    useInlineStudioEditor();
+  const interactive = canEdit && isEditing;
+  const isSelected = selectedField?.kind === "text" && selectedField.path === field.path;
+  const currentValue = String(readValueAtPath(content, field.path) ?? children ?? "");
+  const nextClassName = [
+    className,
+    interactive ? "inline-editable inline-editable--text" : "",
+    isSelected ? "inline-editable--selected inline-editable--active" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  function selectCurrentField() {
+    if (!interactive) {
+      return;
+    }
+
+    selectField(field);
+  }
+
+  function handleSelect(event: {
+    preventDefault: () => void;
+    stopPropagation: () => void;
+  }) {
+    event.preventDefault();
+    event.stopPropagation();
+    selectCurrentField();
+  }
+
+  function handleEditorKeyDown(event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    event.stopPropagation();
+
+    if (event.key === "Escape") {
+      event.currentTarget.blur();
+      return;
+    }
+
+    if (event.key === "Enter" && !field.multiline) {
+      event.preventDefault();
+      event.currentTarget.blur();
+    }
+  }
+
+  return (
+    <Tag
+      className={nextClassName}
+      data-inline-label={interactive ? field.label : undefined}
+      onClick={
+        interactive
+          ? (event) => {
+              if (isSelected) {
+                return;
+              }
+
+              handleSelect(event);
+            }
+          : undefined
+      }
+      onKeyDown={
+        interactive
+          ? (event) => {
+              if (isSelected) {
+                return;
+              }
+
+              if (event.key === "Enter" || event.key === " ") {
+                handleSelect(event);
+              }
+            }
+          : undefined
+      }
+      role={interactive && !isSelected ? "button" : undefined}
+      tabIndex={interactive && !isSelected ? 0 : undefined}
+    >
+      {interactive && isSelected ? (
+        field.multiline ? (
+          <textarea
+            aria-label={field.label}
+            autoFocus
+            className="inline-textarea"
+            onChange={(event) => updateTextField(field.path, event.target.value)}
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={handleEditorKeyDown}
+            placeholder={field.placeholder}
+            rows={4}
+            value={currentValue}
+          />
+        ) : (
+          <input
+            aria-label={field.label}
+            autoFocus
+            className="inline-text-input"
+            onChange={(event) => updateTextField(field.path, event.target.value)}
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={handleEditorKeyDown}
+            placeholder={field.placeholder}
+            type="text"
+            value={currentValue}
+          />
+        )
+      ) : (
+        children
+      )}
+    </Tag>
+  );
+}
+
+function EditableDiv({
+  children,
+  className,
+  field,
+  style,
+}: {
+  children?: ReactNode;
+  className?: string;
+  field: EditableImageField;
+  style?: CSSProperties;
+}) {
+  const { content, selectedField, setImageField, uploadImageField } = useInlineStudioEditor();
+  const editableProps = useEditableElement(field, className);
+  const isSelected = selectedField?.kind === "image" && selectedField.path === field.path;
+  const currentValue = String(readValueAtPath(content, field.path) ?? "");
+
+  return (
+    <div {...editableProps} style={style}>
+      {children}
+      {isSelected ? (
+        <div
+          className="inline-image-controls"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <input
+            aria-label={field.label}
+            className="inline-text-input"
+            onChange={(event) => {
+              void setImageField(field.path, event.target.value);
+            }}
+            placeholder={field.placeholder ?? "Paste image URL"}
+            type="text"
+            value={currentValue}
+          />
+          <label className="upload-button">
+            <span>Upload image</span>
+            <input
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+
+                if (!file) {
+                  return;
+                }
+
+                void uploadImageField(field.path, file);
+                event.target.value = "";
+              }}
+              type="file"
+            />
+          </label>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function EditableActionButton({
+  href,
+  hrefPath,
+  label,
+  labelPath,
+  path,
+  selectionLabel,
+  variant = "primary",
+}: {
+  href: string;
+  hrefPath: string;
+  label: string;
+  labelPath: string;
+  path: string;
+  selectionLabel: string;
+  variant?: "primary" | "secondary";
+}) {
+  const { canEdit, isEditing } = useInlineStudioEditor();
+  const editableProps = useEditableElement(
+    {
+      kind: "action",
+      path,
+      label: selectionLabel,
+      labelPath,
+      hrefPath,
+    },
+    variant === "secondary" ? "cta secondary" : "cta"
+  );
+
+  if (canEdit && isEditing) {
+    return (
+      <button {...editableProps} type="button">
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <LinkButton href={href} variant={variant}>
+      {label}
+    </LinkButton>
+  );
+}
+
 function HeroPanel() {
-  const { content, resolveImageUrl } = useStudio();
+  const content = useEditableStudioContent();
+  const { resolveImageUrl } = useStudio();
 
   return (
     <section className="hero-panel reveal">
-      <div
+      <EditableDiv
+        field={{
+          kind: "image",
+          path: "hero.backgroundImage",
+          label: "Hero background image",
+          alt: "Hero background image",
+        }}
         className="hero-panel__media"
         style={{ backgroundImage: `url(${resolveImageUrl(content.hero.backgroundImage)})` }}
       />
@@ -66,56 +332,150 @@ function HeroPanel() {
       <div className="hero-panel__glow hero-panel__glow--one" />
       <div className="hero-panel__glow hero-panel__glow--two" />
       <div className="hero-panel__content">
-        <span className="hero-eyebrow">{content.hero.eyebrow}</span>
-        <h1>{content.hero.title}</h1>
-        <p className="hero-copy">{content.hero.subtitle}</p>
+        <EditableText
+          as="span"
+          className="hero-eyebrow"
+          field={{ kind: "text", path: "hero.eyebrow", label: "Hero eyebrow" }}
+        >
+          {content.hero.eyebrow}
+        </EditableText>
+        <EditableText
+          as="h1"
+          field={{ kind: "text", path: "hero.title", label: "Hero title", multiline: true }}
+        >
+          {content.hero.title}
+        </EditableText>
+        <EditableText
+          as="p"
+          className="hero-copy"
+          field={{ kind: "text", path: "hero.subtitle", label: "Hero subtitle", multiline: true }}
+        >
+          {content.hero.subtitle}
+        </EditableText>
         <div className="hero-actions">
-          <LinkButton href={content.hero.primaryAction.href}>
-            {content.hero.primaryAction.label}
-          </LinkButton>
-          <LinkButton href={content.hero.secondaryAction.href} variant="secondary">
-            {content.hero.secondaryAction.label}
-          </LinkButton>
+          <EditableActionButton
+            href={content.hero.primaryAction.href}
+            hrefPath="hero.primaryAction.href"
+            label={content.hero.primaryAction.label}
+            labelPath="hero.primaryAction.label"
+            path="hero.primaryAction"
+            selectionLabel="Hero primary button"
+          />
+          <EditableActionButton
+            href={content.hero.secondaryAction.href}
+            hrefPath="hero.secondaryAction.href"
+            label={content.hero.secondaryAction.label}
+            labelPath="hero.secondaryAction.label"
+            path="hero.secondaryAction"
+            selectionLabel="Hero secondary button"
+            variant="secondary"
+          />
         </div>
         <div className="hero-stats">
-          {content.stats.map((stat) => (
+          {content.stats.map((stat, index) => (
             <div className="hero-stat" key={stat.label}>
-              <strong>{stat.value}</strong>
-              <span>{stat.label}</span>
+              <EditableText
+                as="strong"
+                field={{ kind: "text", path: `stats.${index}.value`, label: `Stat ${index + 1} value` }}
+              >
+                {stat.value}
+              </EditableText>
+              <EditableText
+                as="span"
+                field={{ kind: "text", path: `stats.${index}.label`, label: `Stat ${index + 1} label` }}
+              >
+                {stat.label}
+              </EditableText>
             </div>
           ))}
         </div>
       </div>
       <div className="hero-panel__spotlight">
-        <div className="hero-note hero-note--left">{content.hero.notes[0]}</div>
-        <div className="hero-note hero-note--right">{content.hero.notes[1]}</div>
-        <div className="hero-photo-card">
+        <EditableText
+          as="div"
+          className="hero-note hero-note--left"
+          field={{ kind: "text", path: "hero.notes.0", label: "Hero note one", multiline: true }}
+        >
+          {content.hero.notes[0]}
+        </EditableText>
+        <EditableText
+          as="div"
+          className="hero-note hero-note--right"
+          field={{ kind: "text", path: "hero.notes.1", label: "Hero note two", multiline: true }}
+        >
+          {content.hero.notes[1]}
+        </EditableText>
+        <EditableDiv
+          className="hero-photo-card"
+          field={{
+            kind: "image",
+            path: "hero.spotlightImage",
+            label: "Hero spotlight image",
+            alt: "BollyFit studio dancer in motion",
+          }}
+        >
           <ResolvedImage
             src={content.hero.spotlightImage}
             alt="BollyFit studio dancer in motion"
             className="cover-image"
           />
-        </div>
+        </EditableDiv>
       </div>
     </section>
   );
 }
 
 function SummitFeature() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <section className="summit-banner reveal">
       <div className="summit-banner__copy">
-        <span className="chip">{content.summitFeature.label}</span>
-        <h2>{content.summitFeature.title}</h2>
-        <p>{content.summitFeature.description}</p>
+        <EditableText
+          as="span"
+          className="chip"
+          field={{ kind: "text", path: "summitFeature.label", label: "Summit feature label" }}
+        >
+          {content.summitFeature.label}
+        </EditableText>
+        <EditableText
+          as="h2"
+          field={{ kind: "text", path: "summitFeature.title", label: "Summit feature title", multiline: true }}
+        >
+          {content.summitFeature.title}
+        </EditableText>
+        <EditableText
+          as="p"
+          field={{
+            kind: "text",
+            path: "summitFeature.description",
+            label: "Summit feature description",
+            multiline: true,
+          }}
+        >
+          {content.summitFeature.description}
+        </EditableText>
       </div>
       <div className="summit-banner__aside">
-        <p>{content.summitFeature.detail}</p>
-        <LinkButton href={content.summitFeature.action.href}>
-          {content.summitFeature.action.label}
-        </LinkButton>
+        <EditableText
+          as="p"
+          field={{
+            kind: "text",
+            path: "summitFeature.detail",
+            label: "Summit feature detail",
+            multiline: true,
+          }}
+        >
+          {content.summitFeature.detail}
+        </EditableText>
+        <EditableActionButton
+          href={content.summitFeature.action.href}
+          hrefPath="summitFeature.action.href"
+          label={content.summitFeature.action.label}
+          labelPath="summitFeature.action.label"
+          path="summitFeature.action"
+          selectionLabel="Summit feature button"
+        />
       </div>
     </section>
   );
@@ -139,22 +499,61 @@ function BrandPanel() {
   );
 }
 
-function StyleCard({ style }: { style: StyleOffering }) {
+function StyleCard({ style, index }: { style: StyleOffering; index: number }) {
   return (
     <article className="style-card">
-      <div className="style-card__image">
+      <EditableDiv
+        className="style-card__image"
+        field={{
+          kind: "image",
+          path: `styleOfferings.${index}.image`,
+          label: `${style.name} image`,
+          alt: style.name,
+        }}
+      >
         <ResolvedImage src={style.image} alt={style.name} className="cover-image" />
-      </div>
+      </EditableDiv>
       <div className="style-card__body">
         <div className="style-card__topline">
-          <span className="chip chip--light">{style.name}</span>
-          <p>{style.audience}</p>
+          <EditableText
+            as="span"
+            className="chip chip--light"
+            field={{ kind: "text", path: `styleOfferings.${index}.name`, label: `${style.name} chip label` }}
+          >
+            {style.name}
+          </EditableText>
+          <EditableText
+            as="p"
+            field={{ kind: "text", path: `styleOfferings.${index}.audience`, label: `${style.name} audience`, multiline: true }}
+          >
+            {style.audience}
+          </EditableText>
         </div>
-        <h3>{style.name}</h3>
-        <p>{style.summary}</p>
+        <EditableText
+          as="h3"
+          field={{ kind: "text", path: `styleOfferings.${index}.name`, label: `${style.name} title`, multiline: true }}
+        >
+          {style.name}
+        </EditableText>
+        <EditableText
+          as="p"
+          field={{ kind: "text", path: `styleOfferings.${index}.summary`, label: `${style.name} summary`, multiline: true }}
+        >
+          {style.summary}
+        </EditableText>
         <ul className="mini-list">
-          {style.highlights.map((highlight) => (
-            <li key={highlight}>{highlight}</li>
+          {style.highlights.map((highlight, highlightIndex) => (
+            <EditableText
+              as="li"
+              field={{
+                kind: "text",
+                path: `styleOfferings.${index}.highlights.${highlightIndex}`,
+                label: `${style.name} highlight ${highlightIndex + 1}`,
+              }}
+              key={highlight}
+            >
+              {highlight}
+            </EditableText>
           ))}
         </ul>
       </div>
@@ -163,13 +562,13 @@ function StyleCard({ style }: { style: StyleOffering }) {
 }
 
 function StylesGrid({ limit }: { limit?: number }) {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
   const styles = typeof limit === "number" ? content.styleOfferings.slice(0, limit) : content.styleOfferings;
 
   return (
     <div className="style-grid">
-      {styles.map((style) => (
-        <StyleCard key={style.name} style={style} />
+      {styles.map((style, index) => (
+        <StyleCard key={style.name} index={index} style={style} />
       ))}
     </div>
   );
@@ -181,22 +580,75 @@ function ScheduleBoard({ schedule }: { schedule: ScheduleDay[] }) {
       className="schedule-board"
       style={{ "--schedule-columns": String(schedule.length) } as CSSProperties}
     >
-      {schedule.map((day) => (
+      {schedule.map((day, dayIndex) => (
         <article className="schedule-day" key={day.day}>
           <div className="schedule-day__header">
-            <h3>{day.day}</h3>
+            <EditableText
+              as="h3"
+              field={{ kind: "text", path: `schedule.${dayIndex}.day`, label: `${day.day} heading` }}
+            >
+              {day.day}
+            </EditableText>
             <span>{day.sessions.length} session{day.sessions.length > 1 ? "s" : ""}</span>
           </div>
           <div className="schedule-day__list">
-            {day.sessions.map((session) => (
+            {day.sessions.map((session, sessionIndex) => (
               <div className="schedule-session" key={`${day.day}-${session.time}-${session.style}`}>
-                <div className="schedule-session__time">{session.time}</div>
+                <EditableText
+                  as="div"
+                  className="schedule-session__time"
+                  field={{
+                    kind: "text",
+                    path: `schedule.${dayIndex}.sessions.${sessionIndex}.time`,
+                    label: `${day.day} session ${sessionIndex + 1} time`,
+                  }}
+                >
+                  {session.time}
+                </EditableText>
                 <div>
-                  <strong>{session.style}</strong>
+                  <EditableText
+                    as="strong"
+                    field={{
+                      kind: "text",
+                      path: `schedule.${dayIndex}.sessions.${sessionIndex}.style`,
+                      label: `${day.day} session ${sessionIndex + 1} style`,
+                    }}
+                  >
+                    {session.style}
+                  </EditableText>
                   <p>
-                    {session.group} · {session.level}
+                    <EditableText
+                      as="span"
+                      field={{
+                        kind: "text",
+                        path: `schedule.${dayIndex}.sessions.${sessionIndex}.group`,
+                        label: `${day.day} session ${sessionIndex + 1} group`,
+                      }}
+                    >
+                      {session.group}
+                    </EditableText>{" "}
+                    ·{" "}
+                    <EditableText
+                      as="span"
+                      field={{
+                        kind: "text",
+                        path: `schedule.${dayIndex}.sessions.${sessionIndex}.level`,
+                        label: `${day.day} session ${sessionIndex + 1} level`,
+                      }}
+                    >
+                      {session.level}
+                    </EditableText>
                   </p>
-                  <small>{session.instructor}</small>
+                  <EditableText
+                    as="small"
+                    field={{
+                      kind: "text",
+                      path: `schedule.${dayIndex}.sessions.${sessionIndex}.instructor`,
+                      label: `${day.day} session ${sessionIndex + 1} instructor`,
+                    }}
+                  >
+                    {session.instructor}
+                  </EditableText>
                 </div>
               </div>
             ))}
@@ -210,16 +662,51 @@ function ScheduleBoard({ schedule }: { schedule: ScheduleDay[] }) {
 function InstructorGrid({ instructors }: { instructors: InstructorProfile[] }) {
   return (
     <div className="instructor-grid">
-      {instructors.map((instructor) => (
+      {instructors.map((instructor, index) => (
         <article className="instructor-card" key={instructor.name}>
-          <div className="instructor-card__image">
+          <EditableDiv
+            className="instructor-card__image"
+            field={{
+              kind: "image",
+              path: `instructors.${index}.image`,
+              label: `${instructor.name} image`,
+              alt: instructor.name,
+            }}
+          >
             <ResolvedImage src={instructor.image} alt={instructor.name} className="cover-image" />
-          </div>
+          </EditableDiv>
           <div className="instructor-card__body">
-            <span className="chip chip--light">{instructor.role}</span>
-            <h3>{instructor.name}</h3>
-            <p className="instructor-card__specialties">{instructor.specialties}</p>
-            <p>{instructor.bio}</p>
+            <EditableText
+              as="span"
+              className="chip chip--light"
+              field={{ kind: "text", path: `instructors.${index}.role`, label: `${instructor.name} role` }}
+            >
+              {instructor.role}
+            </EditableText>
+            <EditableText
+              as="h3"
+              field={{ kind: "text", path: `instructors.${index}.name`, label: `${instructor.name} name` }}
+            >
+              {instructor.name}
+            </EditableText>
+            <EditableText
+              as="p"
+              className="instructor-card__specialties"
+              field={{
+                kind: "text",
+                path: `instructors.${index}.specialties`,
+                label: `${instructor.name} specialties`,
+                multiline: true,
+              }}
+            >
+              {instructor.specialties}
+            </EditableText>
+            <EditableText
+              as="p"
+              field={{ kind: "text", path: `instructors.${index}.bio`, label: `${instructor.name} bio`, multiline: true }}
+            >
+              {instructor.bio}
+            </EditableText>
           </div>
         </article>
       ))}
@@ -230,21 +717,54 @@ function InstructorGrid({ instructors }: { instructors: InstructorProfile[] }) {
 function EventGrid({ events }: { events: EventPost[] }) {
   return (
     <div className="event-grid">
-      {events.map((event) => (
+      {events.map((event, index) => (
         <article className="event-card" key={event.title}>
-          <div className="event-card__image">
+          <EditableDiv
+            className="event-card__image"
+            field={{
+              kind: "image",
+              path: `events.${index}.image`,
+              label: `${event.title} image`,
+              alt: event.title,
+            }}
+          >
             <ResolvedImage src={event.image} alt={event.title} className="cover-image" />
-          </div>
+          </EditableDiv>
           <div className="event-card__body">
             <div className="event-card__meta">
-              <span>{event.date}</span>
-              <span>{event.location}</span>
+              <EditableText
+                as="span"
+                field={{ kind: "text", path: `events.${index}.date`, label: `${event.title} date` }}
+              >
+                {event.date}
+              </EditableText>
+              <EditableText
+                as="span"
+                field={{ kind: "text", path: `events.${index}.location`, label: `${event.title} location` }}
+              >
+                {event.location}
+              </EditableText>
             </div>
-            <h3>{event.title}</h3>
-            <p>{event.summary}</p>
-            <Link className="text-link" href={event.ctaHref}>
-              {event.ctaLabel}
-            </Link>
+            <EditableText
+              as="h3"
+              field={{ kind: "text", path: `events.${index}.title`, label: `Event ${index + 1} title`, multiline: true }}
+            >
+              {event.title}
+            </EditableText>
+            <EditableText
+              as="p"
+              field={{ kind: "text", path: `events.${index}.summary`, label: `${event.title} summary`, multiline: true }}
+            >
+              {event.summary}
+            </EditableText>
+            <EditableActionButton
+              href={event.ctaHref}
+              hrefPath={`events.${index}.ctaHref`}
+              label={event.ctaLabel}
+              labelPath={`events.${index}.ctaLabel`}
+              path={`events.${index}.cta`}
+              selectionLabel={`${event.title} call to action`}
+            />
           </div>
         </article>
       ))}
@@ -260,10 +780,31 @@ function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
           className={`gallery-card ${index === 0 || index === 4 ? "gallery-card--large" : ""}`}
           key={`${item.title}-${index}`}
         >
-          <ResolvedImage src={item.image} alt={item.title} className="cover-image" />
+          <EditableDiv
+            className="gallery-card__image inline-editable-card-fill"
+            field={{
+              kind: "image",
+              path: `gallery.${index}.image`,
+              label: `${item.title} gallery image`,
+              alt: item.title,
+            }}
+          >
+            <ResolvedImage src={item.image} alt={item.title} className="cover-image" />
+          </EditableDiv>
           <div className="gallery-card__overlay">
-            <span className="chip chip--light">{item.category}</span>
-            <strong>{item.title}</strong>
+            <EditableText
+              as="span"
+              className="chip chip--light"
+              field={{ kind: "text", path: `gallery.${index}.category`, label: `${item.title} category` }}
+            >
+              {item.category}
+            </EditableText>
+            <EditableText
+              as="strong"
+              field={{ kind: "text", path: `gallery.${index}.title`, label: `Gallery item ${index + 1} title` }}
+            >
+              {item.title}
+            </EditableText>
           </div>
         </article>
       ))}
@@ -274,11 +815,26 @@ function GalleryGrid({ gallery }: { gallery: GalleryItem[] }) {
 function TestimonialsGrid({ testimonials }: { testimonials: Testimonial[] }) {
   return (
     <div className="testimonial-grid">
-      {testimonials.map((item) => (
+      {testimonials.map((item, index) => (
         <article className="testimonial-card" key={item.name}>
-          <p>&quot;{item.quote}&quot;</p>
-          <strong>{item.name}</strong>
-          <span>{item.role}</span>
+          <EditableText
+            as="p"
+            field={{ kind: "text", path: `testimonials.${index}.quote`, label: `${item.name} quote`, multiline: true }}
+          >
+            &quot;{item.quote}&quot;
+          </EditableText>
+          <EditableText
+            as="strong"
+            field={{ kind: "text", path: `testimonials.${index}.name`, label: `Testimonial ${index + 1} name` }}
+          >
+            {item.name}
+          </EditableText>
+          <EditableText
+            as="span"
+            field={{ kind: "text", path: `testimonials.${index}.role`, label: `${item.name} role` }}
+          >
+            {item.role}
+          </EditableText>
         </article>
       ))}
     </div>
@@ -288,14 +844,40 @@ function TestimonialsGrid({ testimonials }: { testimonials: Testimonial[] }) {
 function PackagesGrid({ packages }: { packages: PackageOption[] }) {
   return (
     <div className="package-grid">
-      {packages.map((option) => (
+      {packages.map((option, index) => (
         <article className="package-card" key={option.name}>
-          <div className="package-card__price">{option.price}</div>
-          <h3>{option.name}</h3>
-          <p>{option.summary}</p>
+          <EditableText
+            as="div"
+            className="package-card__price"
+            field={{ kind: "text", path: `packages.${index}.price`, label: `${option.name} price` }}
+          >
+            {option.price}
+          </EditableText>
+          <EditableText
+            as="h3"
+            field={{ kind: "text", path: `packages.${index}.name`, label: `Package ${index + 1} name` }}
+          >
+            {option.name}
+          </EditableText>
+          <EditableText
+            as="p"
+            field={{ kind: "text", path: `packages.${index}.summary`, label: `${option.name} summary`, multiline: true }}
+          >
+            {option.summary}
+          </EditableText>
           <ul className="mini-list">
-            {option.perks.map((perk) => (
-              <li key={perk}>{perk}</li>
+            {option.perks.map((perk, perkIndex) => (
+              <EditableText
+                as="li"
+                field={{
+                  kind: "text",
+                  path: `packages.${index}.perks.${perkIndex}`,
+                  label: `${option.name} perk ${perkIndex + 1}`,
+                }}
+                key={perk}
+              >
+                {perk}
+              </EditableText>
             ))}
           </ul>
         </article>
@@ -305,14 +887,24 @@ function PackagesGrid({ packages }: { packages: PackageOption[] }) {
 }
 
 function FaqList() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <div className="faq-list">
-      {content.faq.map((item) => (
+      {content.faq.map((item, index) => (
         <details className="faq-item" key={item.question}>
-          <summary>{item.question}</summary>
-          <p>{item.answer}</p>
+          <EditableText
+            as="summary"
+            field={{ kind: "text", path: `faq.${index}.question`, label: `FAQ ${index + 1} question`, multiline: true }}
+          >
+            {item.question}
+          </EditableText>
+          <EditableText
+            as="p"
+            field={{ kind: "text", path: `faq.${index}.answer`, label: `FAQ ${index + 1} answer`, multiline: true }}
+          >
+            {item.answer}
+          </EditableText>
         </details>
       ))}
     </div>
@@ -320,29 +912,55 @@ function FaqList() {
 }
 
 function StudioStoryPanel() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <section className="story-panel reveal">
       <div className="story-panel__copy">
         <SectionHeading
           eyebrow="The studio story"
-          title={content.cultureStory.title}
+          title={
+            <EditableText
+              as="span"
+              field={{ kind: "text", path: "cultureStory.title", label: "Studio story title", multiline: true }}
+            >
+              {content.cultureStory.title}
+            </EditableText>
+          }
           copy="BollyFit brings together cultural pride, performance training, and a welcoming space for dancers of every age."
         />
         <div className="story-panel__text">
-          {content.cultureStory.paragraphs.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
+          {content.cultureStory.paragraphs.map((paragraph, index) => (
+            <EditableText
+              as="p"
+              field={{
+                kind: "text",
+                path: `cultureStory.paragraphs.${index}`,
+                label: `Studio story paragraph ${index + 1}`,
+                multiline: true,
+              }}
+              key={paragraph}
+            >
+              {paragraph}
+            </EditableText>
           ))}
         </div>
       </div>
-      <div className="story-panel__visual">
+      <EditableDiv
+        className="story-panel__visual"
+        field={{
+          kind: "image",
+          path: content.gallery[0] ? "gallery.0.image" : "hero.spotlightImage",
+          label: "Studio story image",
+          alt: "BollyFit performance moment",
+        }}
+      >
         <ResolvedImage
           src={content.gallery[0]?.image ?? content.hero.spotlightImage}
           alt="BollyFit performance moment"
           className="cover-image"
         />
-      </div>
+      </EditableDiv>
     </section>
   );
 }
@@ -538,16 +1156,20 @@ function PageHero({
   title,
   copy,
   image,
+  imageField,
   primaryAction,
   secondaryAction,
 }: {
-  eyebrow: string;
-  title: string;
-  copy: string;
+  eyebrow: ReactNode;
+  title: ReactNode;
+  copy: ReactNode;
   image: string;
+  imageField?: EditableImageField;
   primaryAction?: ReactNode;
   secondaryAction?: ReactNode;
 }) {
+  const altText = typeof title === "string" ? title : "Page hero image";
+
   return (
     <section className="page-hero reveal">
       <div className="page-hero__copy">
@@ -559,15 +1181,25 @@ function PageHero({
           {secondaryAction}
         </div>
       </div>
-      <div className="page-hero__image">
-        <ResolvedImage src={image} alt={title} className="cover-image" />
-      </div>
+      <EditableDiv
+        className="page-hero__image"
+        field={
+          imageField ?? {
+            kind: "image",
+            path: "hero.backgroundImage",
+            label: "Page hero image",
+            alt: altText,
+          }
+        }
+      >
+        <ResolvedImage src={image} alt={altText} className="cover-image" />
+      </EditableDiv>
     </section>
   );
 }
 
 export function HomePageContent() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <div className="page-shell">
@@ -648,7 +1280,7 @@ export function HomePageContent() {
 }
 
 export function ClassesPageContent() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <div className="page-shell">
@@ -657,6 +1289,12 @@ export function ClassesPageContent() {
         title="Five styles. One studio identity."
         copy="Each class track has its own rhythm, but the studio approach stays consistent: polished instruction, visible progress, and strong performance energy."
         image={content.hero.spotlightImage}
+        imageField={{
+          kind: "image",
+          path: "hero.spotlightImage",
+          label: "Classes page hero image",
+          alt: "Classes page hero image",
+        }}
         primaryAction={<LinkButton href="/booking">Register now</LinkButton>}
         secondaryAction={<LinkButton href="/schedule" variant="secondary">View schedule</LinkButton>}
       />
@@ -704,7 +1342,7 @@ export function ClassesPageContent() {
 }
 
 export function AboutPageContent() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <div className="page-shell">
@@ -713,6 +1351,12 @@ export function AboutPageContent() {
         title="BollyFit celebrates culture in motion."
         copy="The studio story matters because families and dancers want to know what the place stands for, not just what classes it sells."
         image={content.gallery[4]?.image ?? content.hero.backgroundImage}
+        imageField={{
+          kind: "image",
+          path: content.gallery[4] ? "gallery.4.image" : "hero.backgroundImage",
+          label: "About page hero image",
+          alt: "About page hero image",
+        }}
         primaryAction={<LinkButton href="/events">See recent milestones</LinkButton>}
         secondaryAction={<LinkButton href="/contact" variant="secondary">Contact the studio</LinkButton>}
       />
@@ -753,7 +1397,7 @@ export function AboutPageContent() {
 }
 
 export function SchedulePageContent() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <div className="page-shell">
@@ -762,6 +1406,12 @@ export function SchedulePageContent() {
         title="See the full week at a glance."
         copy="Browse class times, age groups, and levels in one place so it is easy to plan your week."
         image={content.gallery[2]?.image ?? content.hero.spotlightImage}
+        imageField={{
+          kind: "image",
+          path: content.gallery[2] ? "gallery.2.image" : "hero.spotlightImage",
+          label: "Schedule page hero image",
+          alt: "Schedule page hero image",
+        }}
         primaryAction={<LinkButton href="/booking">Register for a class</LinkButton>}
         secondaryAction={<LinkButton href="/contact" variant="secondary">Ask for help choosing</LinkButton>}
       />
@@ -797,7 +1447,7 @@ export function SchedulePageContent() {
 }
 
 export function InstructorsPageContent() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <div className="page-shell">
@@ -806,6 +1456,12 @@ export function InstructorsPageContent() {
         title="A team that can teach beginners and shape performers."
         copy="Meet the artists and teachers shaping technique, confidence, and performance quality across the studio."
         image={content.gallery[1]?.image ?? content.hero.spotlightImage}
+        imageField={{
+          kind: "image",
+          path: content.gallery[1] ? "gallery.1.image" : "hero.spotlightImage",
+          label: "Instructors page hero image",
+          alt: "Instructors page hero image",
+        }}
         primaryAction={<LinkButton href="/booking">Train with the team</LinkButton>}
         secondaryAction={<LinkButton href="/about" variant="secondary">Read the studio story</LinkButton>}
       />
@@ -821,7 +1477,7 @@ export function InstructorsPageContent() {
 }
 
 export function EventsPageContent() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <div className="page-shell">
@@ -830,6 +1486,12 @@ export function EventsPageContent() {
         title="A studio community that stays active and visible."
         copy="Follow performance milestones, community appearances, showcases, and special moments from the BollyFit journey."
         image={content.gallery[5]?.image ?? content.hero.backgroundImage}
+        imageField={{
+          kind: "image",
+          path: content.gallery[5] ? "gallery.5.image" : "hero.backgroundImage",
+          label: "Events page hero image",
+          alt: "Events page hero image",
+        }}
         primaryAction={<LinkButton href="/contact">Book the studio</LinkButton>}
         secondaryAction={<LinkButton href="/booking" variant="secondary">Join a class</LinkButton>}
       />
@@ -846,7 +1508,7 @@ export function EventsPageContent() {
 }
 
 export function GalleryPageContent() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <div className="page-shell">
@@ -855,6 +1517,12 @@ export function GalleryPageContent() {
         title="Moments from rehearsals, performances, and studio life."
         copy="A living visual story of classes, showcases, rehearsals, and stage moments."
         image={content.hero.backgroundImage}
+        imageField={{
+          kind: "image",
+          path: "hero.backgroundImage",
+          label: "Gallery page hero image",
+          alt: "Gallery page hero image",
+        }}
         primaryAction={<LinkButton href="/booking">Register today</LinkButton>}
         secondaryAction={<LinkButton href="/booking" variant="secondary">Register today</LinkButton>}
       />
@@ -874,7 +1542,7 @@ export function GalleryPageContent() {
 }
 
 export function BookingPageContent() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <div className="page-shell">
@@ -883,6 +1551,12 @@ export function BookingPageContent() {
         title="Register in one step and let the studio guide the rest."
         copy="Share a few details and the studio will help guide you toward the right class, level, or trial."
         image={content.gallery[3]?.image ?? content.hero.spotlightImage}
+        imageField={{
+          kind: "image",
+          path: content.gallery[3] ? "gallery.3.image" : "hero.spotlightImage",
+          label: "Booking page hero image",
+          alt: "Booking page hero image",
+        }}
       />
       <section className="section-block reveal">
         <SectionHeading
@@ -918,7 +1592,7 @@ export function BookingPageContent() {
 }
 
 export function ContactPageContent() {
-  const { content } = useStudio();
+  const content = useEditableStudioContent();
 
   return (
     <div className="page-shell">
@@ -927,38 +1601,65 @@ export function ContactPageContent() {
         title="Talk to the studio about classes, performances, or partnerships."
         copy="This page works for parents, adult students, cultural organizations, and event partners who need a direct path to the studio."
         image={content.gallery[0]?.image ?? content.hero.backgroundImage}
+        imageField={{
+          kind: "image",
+          path: content.gallery[0] ? "gallery.0.image" : "hero.backgroundImage",
+          label: "Contact page hero image",
+          alt: "Contact page hero image",
+        }}
       />
       <section className="contact-layout reveal">
         <div className="contact-details">
           <SectionHeading
             title="Studio contact"
-            copy={content.contact.serviceArea}
+            copy={
+              <EditableText
+                as="span"
+                field={{ kind: "text", path: "contact.serviceArea", label: "Service area", multiline: true }}
+              >
+                {content.contact.serviceArea}
+              </EditableText>
+            }
           />
           <div className="info-grid">
             <article className="info-card">
               <h3>Email</h3>
-              <p>{content.contact.email}</p>
+              <EditableText
+                as="p"
+                field={{ kind: "text", path: "contact.email", label: "Contact email" }}
+              >
+                {content.contact.email}
+              </EditableText>
             </article>
             <article className="info-card">
               <h3>Phone</h3>
-              <p>{content.contact.phone}</p>
+              <EditableText
+                as="p"
+                field={{ kind: "text", path: "contact.phone", label: "Contact phone" }}
+              >
+                {content.contact.phone}
+              </EditableText>
             </article>
             <article className="info-card">
               <h3>Instagram</h3>
               <p>
-                <a
+                <EditableText
+                  as="span"
                   className="text-link"
-                  href="https://www.instagram.com/bollyfit_dance_studio/"
-                  rel="noopener noreferrer"
-                  target="_blank"
+                  field={{ kind: "text", path: "contact.instagram", label: "Instagram handle" }}
                 >
                   {content.contact.instagram}
-                </a>
+                </EditableText>
               </p>
             </article>
             <article className="info-card">
               <h3>Response time</h3>
-              <p>{content.contact.responseTime}</p>
+              <EditableText
+                as="p"
+                field={{ kind: "text", path: "contact.responseTime", label: "Response time" }}
+              >
+                {content.contact.responseTime}
+              </EditableText>
             </article>
           </div>
         </div>

@@ -324,6 +324,21 @@ async function putFirestoreDocument(
   });
 }
 
+async function deleteFirestoreDocument(path: string, idToken?: string) {
+  const response = await fetch(buildFirestoreDocumentUrl(path), {
+    method: "DELETE",
+    headers: idToken ? { Authorization: `Bearer ${idToken}` } : undefined,
+  });
+
+  if (response.status === 404) {
+    return;
+  }
+
+  if (!response.ok) {
+    throw new Error(await parseErrorResponse(response));
+  }
+}
+
 async function listFirestoreCollection<T>(collectionId: string, idToken?: string) {
   const response = await fetchMaybeJson<{ documents?: FirestoreDocument[] }>(
     `${buildFirestoreCollectionUrl(collectionId)}?pageSize=200`,
@@ -555,7 +570,14 @@ export async function restoreFirebaseSession(session: StudioSession | null) {
     let nextSession = session;
 
     if (!nextSession.expiresAt || nextSession.expiresAt - Date.now() < 60_000) {
-      const refreshed = await refreshIdToken(nextSession.refreshToken);
+      const refreshToken = nextSession.refreshToken;
+
+      if (!refreshToken) {
+        clearStoredFirebaseSession();
+        return null;
+      }
+
+      const refreshed = await refreshIdToken(refreshToken);
 
       nextSession = {
         ...nextSession,
@@ -771,4 +793,12 @@ export async function loadFirebaseAssetDataUrl(assetId: string) {
   );
 
   return asset?.dataUrl ?? "";
+}
+
+export async function deleteFirebaseAsset(assetId: string, session: StudioSession) {
+  if (session.role !== "admin" || session.authMode !== "firebase" || !session.idToken) {
+    throw new Error("Only admin accounts can remove images.");
+  }
+
+  await deleteFirestoreDocument(`${FIRESTORE_COLLECTIONS.assets}/${assetId}`, session.idToken);
 }

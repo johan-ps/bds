@@ -6,9 +6,11 @@ import {
   utilityNavigation,
 } from "../../lib/studio-content";
 import { useStudio } from "../providers/StudioProvider";
+import { useEditableStudioContent } from "../site/InlineStudioEditor";
 
 export function SiteFooter() {
-  const { content, isAdmin, session } = useStudio();
+  const content = useEditableStudioContent();
+  const { session } = useStudio();
   const isSignedIn = Boolean(session);
   const utilityLinks = utilityNavigation.filter(
     (item) => !(item.href === "/login" && isSignedIn)

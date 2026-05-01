@@ -5,7 +5,7 @@ import "./globals.css";
 import { SiteFooter } from "./components/layout/SiteFooter";
 import { SiteHeader } from "./components/layout/SiteHeader";
 import { StudioProvider } from "./components/providers/StudioProvider";
-import { InlineStudioEditor } from "./components/site/InlineStudioEditor";
+import { InlineStudioEditorProvider } from "./components/site/InlineStudioEditor";
 import { RevealObserver } from "./components/ui/RevealObserver";
 
 const bodyFont = Urbanist({
@@ -39,13 +39,14 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${bodyFont.variable} ${displayFont.variable} antialiased`}>
         <StudioProvider>
-          <div className="app-shell">
-            <RevealObserver />
-            <SiteHeader />
-            <main className="page">{children}</main>
-            <InlineStudioEditor />
-            <SiteFooter />
-          </div>
+          <InlineStudioEditorProvider>
+            <div className="app-shell">
+              <RevealObserver />
+              <SiteHeader />
+              <main className="page">{children}</main>
+              <SiteFooter />
+            </div>
+          </InlineStudioEditorProvider>
         </StudioProvider>
       </body>
     </html>
