@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Syne, Urbanist } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
+import "./premium.css";
 import { SiteFooter } from "./components/layout/SiteFooter";
 import { SiteHeader } from "./components/layout/SiteHeader";
 import { StudioProvider } from "./components/providers/StudioProvider";

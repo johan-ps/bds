@@ -1,5 +1,3 @@
-import { pexels } from "./images";
-
 export type ActionLink = {
   label: string;
   href: string;
@@ -37,6 +35,22 @@ export type InstructorProfile = {
   specialties: string;
   bio: string;
   image: string;
+  instagram?: string;
+  youtube?: string;
+};
+
+export type FounderProfile = {
+  name: string;
+  role: string;
+  tagline: string;
+  bio: string;
+  image: string;
+  stats: StudioStat[];
+};
+
+export type ValueItem = {
+  title: string;
+  summary: string;
 };
 
 export type EventPost = {
@@ -49,9 +63,20 @@ export type EventPost = {
   ctaHref: string;
 };
 
+export type HighlightItem = {
+  title: string;
+  image: string;
+};
+
 export type GalleryItem = {
   title: string;
   category: string;
+  image: string;
+};
+
+export type GalleryAlbum = {
+  title: string;
+  meta: string;
   image: string;
 };
 
@@ -73,10 +98,16 @@ export type FaqItem = {
   answer: string;
 };
 
+export type ContactHour = {
+  label: string;
+  time: string;
+};
+
 export type StudioContent = {
   hero: {
     eyebrow: string;
     title: string;
+    titleHighlight: string;
     subtitle: string;
     primaryAction: ActionLink;
     secondaryAction: ActionLink;
@@ -89,6 +120,10 @@ export type StudioContent = {
     title: string;
     description: string;
     detail: string;
+    image: string;
+    location: string;
+    date: string;
+    community: string;
     action: ActionLink;
   };
   stats: StudioStat[];
@@ -97,10 +132,14 @@ export type StudioContent = {
     title: string;
     paragraphs: string[];
   };
+  values: ValueItem[];
+  founder: FounderProfile;
   schedule: ScheduleDay[];
   instructors: InstructorProfile[];
   events: EventPost[];
+  pastHighlights: HighlightItem[];
   gallery: GalleryItem[];
+  albums: GalleryAlbum[];
   testimonials: Testimonial[];
   packages: PackageOption[];
   faq: FaqItem[];
@@ -111,7 +150,9 @@ export type StudioContent = {
     youtube: string;
     whatsapp: string;
     serviceArea: string;
+    address: string;
     responseTime: string;
+    hours: ContactHour[];
   };
 };
 
@@ -130,313 +171,300 @@ export const utilityNavigation = [
   { label: "Login", href: "/login" },
 ];
 
+const IMG = {
+  heroDancer: "/images/hero-dancer.jpg",
+  bollywoodStage: "/images/bollywood-stage.jpg",
+  bollywoodRed: "/images/bollywood-red.jpg",
+  kuthu: "/images/kuthu-leap.jpg",
+  hiphop: "/images/hiphop-dancer.jpg",
+  contemporary: "/images/contemporary-purple.jpg",
+  summit: "/images/world-of-dance-summit.jpg",
+  founder: "/images/founder-portrait.jpg",
+  team: "/images/team-group.jpg",
+  logoBurst: "/images/bds-logo-burst.jpg",
+};
+
 export const seedStudioContent: StudioContent = {
   hero: {
-    eyebrow: "South Asian dance training for the next generation of performers",
-    title: "Where Culture Takes The Floor",
+    eyebrow: "South Asian dance training for the next generation",
+    title: "Where Culture Takes the Floor",
+    titleHighlight: "Culture",
     subtitle:
-      "BollyFit Dance Studio blends kuthu, hiphop, contemporary, bollywood, and fusion into a studio experience that feels modern, high-energy, and deeply rooted in community.",
+      "BollyFit Dance Studio blends South Asian culture, global movement, and modern training to help you grow in confidence, artistry, and stage presence.",
     primaryAction: {
-      label: "Register For Classes",
-      href: "/booking",
+      label: "Explore Classes",
+      href: "/classes",
     },
     secondaryAction: {
-      label: "See Weekly Schedule",
+      label: "View Schedule",
       href: "/schedule",
     },
-    backgroundImage: pexels("1701194", 1800),
-    spotlightImage: pexels("358042", 1200),
+    backgroundImage: IMG.heroDancer,
+    spotlightImage: IMG.heroDancer,
     notes: [
+      "Movement is our language. Culture is our rhythm. Confidence is our stage.",
       "Performance-led training for kids, teens, and adults.",
-      "Selected to compete at the World of Dance Summit in Los Angeles.",
     ],
   },
   summitFeature: {
     label: "Global Stage",
     title: "World of Dance Summit, Los Angeles",
     description:
-      "Our studio has been selected to compete at the World of Dance Summit, taking the energy of our community and culture to one of the most respected dance stages in the world.",
+      "We're proud to represent South Asian culture on one of the most respected dance stages in the world.",
     detail:
       "That milestone reflects what drives BollyFit: promoting South Asian culture, building confidence through movement, and showing up for community events with pride and purpose.",
+    image: IMG.summit,
+    location: "Los Angeles, CA",
+    date: "Summer 2026",
+    community: "International Stage, Global Community",
     action: {
-      label: "Explore Recent Events",
+      label: "Explore Event",
       href: "/events",
     },
   },
   stats: [
-    { value: "5", label: "signature styles" },
-    { value: "All ages", label: "kids to adults" },
-    { value: "Performance", label: "training pathway" },
-    { value: "Community", label: "culture-first focus" },
+    { value: "1,200+", label: "Active Students" },
+    { value: "25+", label: "Expert Instructors" },
+    { value: "120+", label: "Weekly Classes" },
+    { value: "50+", label: "Shows & Events" },
   ],
   styleOfferings: [
     {
+      name: "Bollywood",
+      summary: "High-energy, expressive, and full of filmi flair.",
+      audience: "High-energy dance routines inspired by Bollywood blockbusters.",
+      image: IMG.bollywoodRed,
+      highlights: ["Film-style choreography", "Fitness through dance", "Audience appeal"],
+    },
+    {
       name: "Kuthu",
-      summary: "Explosive footwork, festival rhythm, and full-room energy.",
-      audience: "Best for: open level performers who want stamina and stage presence",
-      image: pexels("1701200", 1200),
+      summary: "Powerful beats, bold moves, traditional soul.",
+      audience: "Explosive footwork, festival rhythm, and full-room energy.",
+      image: IMG.kuthu,
       highlights: ["Fast footwork", "Athletic drills", "Stage confidence"],
     },
     {
-      name: "Hiphop",
-      summary: "Groove, control, and musicality with a strong performance edge.",
-      audience: "Best for: juniors, teens, and adults building freestyle confidence",
-      image: pexels("1190298", 1200),
+      name: "Hip-Hop",
+      summary: "Urban vibes, freestyle energy, limitless attitude.",
+      audience: "Groove, control, and musicality with a strong performance edge.",
+      image: IMG.hiphop,
       highlights: ["Foundations", "Texture changes", "Crew choreography"],
     },
     {
       name: "Contemporary",
-      summary: "Fluid movement, emotional phrasing, and stronger body awareness.",
-      audience: "Best for: dancers who want expression, range, and storytelling",
-      image: pexels("1190297", 1200),
+      summary: "Fluid movement, deep expression, pure artistry.",
+      audience: "Emotional phrasing, stronger body awareness, and storytelling.",
+      image: IMG.contemporary,
       highlights: ["Lines and flow", "Floorwork", "Emotional performance"],
     },
     {
-      name: "Bollywood",
-      summary: "Big expressions, cinematic energy, and joyful cardio-driven training.",
-      audience: "Best for: all levels looking for performance and confidence",
-      image: pexels("175658", 1200),
-      highlights: ["Film-style choreography", "Fitness through dance", "Audience appeal"],
-    },
-    {
       name: "Fusion",
-      summary: "A modern mix of South Asian rhythm and contemporary stage craft.",
-      audience: "Best for: competitive teams and dancers who want versatility",
-      image: pexels("1738986", 1200),
+      summary: "A blend of styles. Limitless creativity. Signature BollyFit energy.",
+      audience: "For competitive teams and dancers who want versatility.",
+      image: IMG.bollywoodStage,
       highlights: ["Hybrid choreography", "Competition pieces", "Creative direction"],
     },
   ],
   cultureStory: {
-    title: "Built on culture, contribution, and bold performance",
+    title: "Rooted in Culture. Driven by Purpose.",
     paragraphs: [
-      "BollyFit Dance Studio has had the privilege of voluntarily performing at cultural and competitive events across the community. Our dancers show up because they believe in sharing South Asian culture with energy, excellence, and pride.",
+      "BollyFit is more than a dance studio — it's a community that celebrates South Asian heritage, inspires self-expression, and empowers every dancer to shine on and off the stage.",
       "That same spirit shapes every class. We train hard, perform with intention, and create space for dancers to grow in confidence while representing their heritage on bigger and bigger stages.",
-      "From community showcases to international competition opportunities, the goal is the same: celebrate diversity, build cross-cultural connection, and make the studio feel alive the moment someone walks in.",
+      "From community showcases to international competition opportunities, the goal stays the same: celebrate diversity, build cross-cultural connection, and make the studio feel alive the moment someone walks in.",
+    ],
+  },
+  values: [
+    { title: "Culture First", summary: "We honor our roots in every move." },
+    { title: "Empowerment", summary: "Building confidence that lasts a lifetime." },
+    { title: "Excellence", summary: "Premium training with global standards." },
+    { title: "Community", summary: "A family that uplifts and grows together." },
+    { title: "Creativity", summary: "We inspire original expression and fearless artistry." },
+  ],
+  founder: {
+    name: "Anika Rao",
+    role: "Founder & Artistic Director",
+    tagline: "Visionary. Choreographer. Community Catalyst.",
+    bio: "Anika founded BollyFit Dance Studio with a mission to honor South Asian culture through movement while creating a space where every dancer feels seen, challenged, and inspired. With 15+ years of performance and teaching experience, she leads with heart, excellence, and purpose.",
+    image: IMG.founder,
+    stats: [
+      { value: "15+", label: "Years Experience" },
+      { value: "Trained", label: "India & USA" },
+      { value: "Featured", label: "Global Stages" },
+      { value: "Expert in", label: "Bolly, Fusion, Contemporary" },
     ],
   },
   schedule: [
     {
       day: "Monday",
       sessions: [
-        {
-          time: "5:30 PM",
-          style: "Bollywood Basics",
-          group: "Kids 7-10",
-          level: "Beginner",
-          instructor: "Anika",
-        },
-        {
-          time: "7:15 PM",
-          style: "Fusion Team Lab",
-          group: "Teens",
-          level: "Intermediate",
-          instructor: "Riya",
-        },
+        { time: "5:30 PM", style: "Bollywood Basics", group: "Kids 7-10", level: "Beginner", instructor: "Anika" },
+        { time: "7:15 PM", style: "Fusion Team Lab", group: "Teens", level: "Intermediate", instructor: "Riya" },
       ],
     },
     {
       day: "Tuesday",
       sessions: [
-        {
-          time: "6:00 PM",
-          style: "Kuthu Power",
-          group: "Open",
-          level: "All levels",
-          instructor: "Arjun",
-        },
-        {
-          time: "7:30 PM",
-          style: "Adult Bollywood Fit",
-          group: "Adults",
-          level: "All levels",
-          instructor: "Megha",
-        },
+        { time: "6:00 PM", style: "Kuthu Power", group: "Open", level: "All levels", instructor: "Arjun" },
+        { time: "7:30 PM", style: "Adult Bollywood Fit", group: "Adults", level: "All levels", instructor: "Anika" },
       ],
     },
     {
       day: "Wednesday",
       sessions: [
-        {
-          time: "5:45 PM",
-          style: "Junior Hiphop",
-          group: "Juniors",
-          level: "Beginner",
-          instructor: "Arjun",
-        },
-        {
-          time: "7:15 PM",
-          style: "Contemporary Flow",
-          group: "Teens & Adults",
-          level: "Intermediate",
-          instructor: "Sahana",
-        },
+        { time: "5:45 PM", style: "Junior Hip-Hop", group: "Juniors", level: "Beginner", instructor: "Arjun" },
+        { time: "7:15 PM", style: "Contemporary Flow", group: "Teens & Adults", level: "Intermediate", instructor: "Sahana" },
       ],
     },
     {
       day: "Thursday",
       sessions: [
-        {
-          time: "6:00 PM",
-          style: "Bollywood Performance",
-          group: "Teens",
-          level: "Intermediate",
-          instructor: "Megha",
-        },
-        {
-          time: "7:30 PM",
-          style: "Hiphop Crew Drills",
-          group: "Open",
-          level: "Intermediate",
-          instructor: "Arjun",
-        },
+        { time: "6:00 PM", style: "Bollywood Performance", group: "Teens", level: "Intermediate", instructor: "Anika" },
+        { time: "7:30 PM", style: "Hip-Hop Crew Drills", group: "Open", level: "Intermediate", instructor: "Arjun" },
       ],
     },
     {
       day: "Friday",
       sessions: [
-        {
-          time: "6:15 PM",
-          style: "Fusion Choreo",
-          group: "Competition team",
-          level: "Advanced",
-          instructor: "Riya",
-        },
-        {
-          time: "7:45 PM",
-          style: "Adult Kuthu Fit",
-          group: "Adults",
-          level: "All levels",
-          instructor: "Anika",
-        },
+        { time: "6:15 PM", style: "Fusion Choreo", group: "Competition team", level: "Advanced", instructor: "Riya" },
+        { time: "7:45 PM", style: "Adult Kuthu Fit", group: "Adults", level: "All levels", instructor: "Arjun" },
       ],
     },
     {
       day: "Saturday",
       sessions: [
-        {
-          time: "10:00 AM",
-          style: "Mini Movers Bollywood",
-          group: "Ages 4-6",
-          level: "Beginner",
-          instructor: "Anika",
-        },
-        {
-          time: "11:30 AM",
-          style: "Contemporary Foundations",
-          group: "Juniors",
-          level: "Beginner",
-          instructor: "Sahana",
-        },
-        {
-          time: "1:00 PM",
-          style: "Performance Team Rehearsal",
-          group: "Selected dancers",
-          level: "Advanced",
-          instructor: "Riya",
-        },
+        { time: "10:00 AM", style: "Mini Movers Bollywood", group: "Ages 4-6", level: "Beginner", instructor: "Anika" },
+        { time: "11:30 AM", style: "Contemporary Foundations", group: "Juniors", level: "Beginner", instructor: "Sahana" },
+        { time: "1:00 PM", style: "Performance Team Rehearsal", group: "Selected", level: "Advanced", instructor: "Riya" },
       ],
     },
     {
       day: "Sunday",
       sessions: [
-        {
-          time: "11:00 AM",
-          style: "Open Choreo Intensive",
-          group: "Teens & Adults",
-          level: "Open",
-          instructor: "Guest faculty",
-        },
+        { time: "11:00 AM", style: "Open Choreo Intensive", group: "Teens & Adults", level: "Open", instructor: "Guest faculty" },
       ],
     },
   ],
   instructors: [
     {
       name: "Anika Rao",
-      role: "Studio Director",
-      specialties: "Bollywood, kids foundations, community performances",
+      role: "Founder & Director",
+      specialties: "Bollywood, Fusion, Contemporary",
       bio: "Anika leads the studio vision with a teaching style that balances discipline, warmth, and visible stage confidence.",
-      image: pexels("774909", 1000),
+      image: IMG.bollywoodRed,
+      instagram: "https://www.instagram.com/bollyfit_dance_studio/",
+      youtube: "https://www.youtube.com/",
     },
     {
       name: "Arjun Selvan",
       role: "Lead Choreographer",
-      specialties: "Kuthu, hiphop, performance drilling",
+      specialties: "Kuthu, Hip-Hop, Folk Fusion",
       bio: "Arjun focuses on timing, stamina, and crowd-commanding energy for dancers building a stronger performance identity.",
-      image: pexels("2379004", 1000),
+      image: IMG.kuthu,
+      instagram: "https://www.instagram.com/bollyfit_dance_studio/",
+      youtube: "https://www.youtube.com/",
     },
     {
       name: "Sahana Iyer",
-      role: "Contemporary Instructor",
-      specialties: "Contemporary, fusion storytelling, technique",
+      role: "Contemporary Lead",
+      specialties: "Contemporary, Lyrical",
       bio: "Sahana helps dancers move with more range, fluidity, and intention while keeping choreography emotionally grounded.",
-      image: pexels("1181686", 1000),
+      image: IMG.contemporary,
+      instagram: "https://www.instagram.com/bollyfit_dance_studio/",
+      youtube: "https://www.youtube.com/",
     },
     {
       name: "Riya Krish",
       role: "Competition Team Coach",
-      specialties: "Fusion, stage direction, ensemble work",
+      specialties: "Fusion, Stage Direction",
       bio: "Riya shapes polished competition sets and trains teams to move with precision under pressure.",
-      image: pexels("415829", 1000),
+      image: IMG.hiphop,
+      instagram: "https://www.instagram.com/bollyfit_dance_studio/",
+      youtube: "https://www.youtube.com/",
     },
   ],
   events: [
     {
-      title: "Selected for World of Dance Summit",
+      title: "World of Dance Summit",
       date: "Summer 2026",
-      location: "Los Angeles",
+      location: "Los Angeles, CA",
       summary:
         "BollyFit has been selected to compete at the World of Dance Summit, taking our culture and choreography to an international audience.",
-      image: pexels("358042", 1200),
-      ctaLabel: "Join the Journey",
+      image: IMG.summit,
+      ctaLabel: "Get Tickets",
       ctaHref: "/contact",
     },
     {
       title: "Community Cultural Showcase",
       date: "Spring 2026",
-      location: "Sydney",
+      location: "Sydney, AU",
       summary:
         "Our dancers performed voluntarily at a regional cultural event, celebrating diversity and building deeper community connection through movement.",
-      image: pexels("1701194", 1200),
-      ctaLabel: "Book a Performance",
+      image: IMG.bollywoodStage,
+      ctaLabel: "Learn More",
       ctaHref: "/contact",
     },
     {
-      title: "Youth Performance Team Auditions",
+      title: "Kuthu Fusion Workshop",
       date: "Open Registration",
       location: "Studio Program",
       summary:
-        "Dancers ready for extra rehearsals, stronger choreography detail, and stage-focused coaching can audition for the next performance cycle.",
-      image: pexels("1738986", 1200),
+        "High-energy Kuthu fusion training with explosive footwork, bold movement, and traditional rhythm reimagined for the stage.",
+      image: IMG.kuthu,
+      ctaLabel: "Book Now",
+      ctaHref: "/booking",
+    },
+    {
+      title: "Contemporary Movement Lab",
+      date: "Open Registration",
+      location: "Studio Program",
+      summary:
+        "Explore fluid movement, expression, and storytelling through dance in this intensive, expression-led lab.",
+      image: IMG.contemporary,
       ctaLabel: "Register Now",
       ctaHref: "/booking",
     },
   ],
+  pastHighlights: [
+    { title: "BollyFit Showcase 2024", image: IMG.bollywoodStage },
+    { title: "World of Dance Summit 2024", image: IMG.summit },
+    { title: "Kuthu Night: Live", image: IMG.kuthu },
+    { title: "Student Company Showcase", image: IMG.contemporary },
+  ],
   gallery: [
-    { title: "Stage rehearsal", category: "Performance", image: pexels("1701193", 1200) },
-    { title: "Bollywood team practice", category: "Studio", image: pexels("175658", 1200) },
-    { title: "Crew training", category: "Hiphop", image: pexels("1190298", 1200) },
-    { title: "Contemporary phrasework", category: "Technique", image: pexels("1190297", 1200) },
-    { title: "Festival spotlight", category: "Community", image: pexels("1701200", 1200) },
-    { title: "Open choreography session", category: "Fusion", image: pexels("1738986", 1200) },
+    { title: "Stage spotlight", category: "Performance", image: IMG.bollywoodRed },
+    { title: "Company photo", category: "Community", image: IMG.team },
+    { title: "Bollywood lead", category: "Performance", image: IMG.heroDancer },
+    { title: "Crew energy", category: "Hip-Hop", image: IMG.hiphop },
+    { title: "Festival rhythm", category: "Performance", image: IMG.bollywoodStage },
+    { title: "Kuthu power", category: "Studio", image: IMG.kuthu },
+    { title: "World of Dance Summit", category: "Performance", image: IMG.summit },
+    { title: "Contemporary phrasing", category: "Technique", image: IMG.contemporary },
+    { title: "Behind the scenes", category: "Community", image: IMG.team },
+  ],
+  albums: [
+    { title: "World of Dance Summit", meta: "124 Photos · 2 Videos", image: IMG.summit },
+    { title: "BollyFit Showcase 2025", meta: "98 Photos · 1 Video", image: IMG.bollywoodStage },
+    { title: "Workshop Highlights", meta: "76 Photos · 3 Videos", image: IMG.kuthu },
+    { title: "Studio Life", meta: "63 Photos · 2 Videos", image: IMG.team },
   ],
   testimonials: [
     {
       name: "Shreya P.",
       role: "Parent",
       quote:
-        "The studio feels polished and welcoming at the same time. My daughter feels proud of what she is learning here.",
+        "BollyFit is my second home. The energy, the instructors, the community — everything pushes me to be better.",
     },
     {
       name: "Karan M.",
       role: "Adult student",
       quote:
-        "The classes are energetic, culturally grounded, and surprisingly well structured. It made me want to keep coming back.",
+        "I've grown so much in confidence and technique. The classes are challenging, fun, and so inspiring!",
     },
     {
       name: "Nivetha R.",
       role: "Performance team dancer",
       quote:
-        "Training here pushed my stage confidence up quickly. Every rehearsal feels like it is building toward something bigger.",
+        "From my first class, I felt welcomed. BollyFit truly brings culture, passion, and family together.",
     },
   ],
   packages: [
@@ -461,28 +489,39 @@ export const seedStudioContent: StudioContent = {
   ],
   faq: [
     {
-      question: "Do you offer classes for beginners?",
+      question: "Do I need dance experience to join?",
       answer:
-        "Yes. We run beginner-friendly pathways for kids, teens, and adults, and we can recommend the right starting class after registration.",
+        "Not at all! BollyFit welcomes all levels — from complete beginners to advanced dancers. Our classes are designed to help you grow at your own pace in a supportive environment.",
     },
     {
-      question: "Can students join for performance opportunities?",
+      question: "What should I wear to class?",
       answer:
-        "Yes. We offer class-based performance opportunities and a stronger team track for dancers who want extra rehearsal and stage experience.",
+        "Wear comfortable, movement-friendly clothing and supportive shoes. Bring water and a small towel. For certain styles we'll guide you on the best footwear once you start.",
     },
     {
-      question: "Do you handle event and cultural show bookings?",
+      question: "Can I try a class before committing?",
       answer:
-        "Yes. The studio can be contacted for cultural showcases, stage performances, workshops, and private choreography requests.",
+        "Yes. Your first class is a free trial so you can experience the energy, meet the instructors, and find the right fit before joining a program.",
+    },
+    {
+      question: "Do you offer classes for all ages?",
+      answer:
+        "We run beginner-friendly pathways for kids, teens, and adults, plus a performance team track for dancers who want extra rehearsal and stage experience.",
     },
   ],
   contact: {
     email: "bollyfitdancestudio@gmail.com",
-    phone: "0406165043",
+    phone: "0406 165 043",
     instagram: "@bollyfit_dance_studio",
     youtube: "BollyFit Dance Studio",
     whatsapp: "+61 406 165 043",
     serviceArea: "Serving families, teens, adults, and event partners across Sydney.",
+    address: "Sydney, Australia",
     responseTime: "Typical reply within 24 hours.",
+    hours: [
+      { label: "Mon – Fri", time: "4:00pm – 9:00pm" },
+      { label: "Saturday", time: "9:00am – 6:00pm" },
+      { label: "Sunday", time: "10:00am – 4:00pm" },
+    ],
   },
 };
