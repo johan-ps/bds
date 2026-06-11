@@ -162,11 +162,11 @@ export const primaryNavigation = [
   { label: "Instructors", href: "/instructors" },
   { label: "Events", href: "/events" },
   { label: "Gallery", href: "/gallery" },
+  { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
 
 export const utilityNavigation = [
-  { label: "Studio Story", href: "/about" },
   { label: "Register", href: "/booking" },
   { label: "Login", href: "/login" },
 ];
@@ -281,10 +281,10 @@ export const seedStudioContent: StudioContent = {
     { title: "Creativity", summary: "We inspire original expression and fearless artistry." },
   ],
   founder: {
-    name: "Anika Rao",
+    name: "Yasotharabharathy Singarayar",
     role: "Founder & Artistic Director",
     tagline: "Visionary. Choreographer. Community Catalyst.",
-    bio: "Anika founded BollyFit Dance Studio with a mission to honor South Asian culture through movement while creating a space where every dancer feels seen, challenged, and inspired. With 15+ years of performance and teaching experience, she leads with heart, excellence, and purpose.",
+    bio: "Yasotharabharathy founded BollyFit Dance Studio with a mission to honor South Asian culture through movement while creating a space where every dancer feels seen, challenged, and inspired. With 15+ years of performance and teaching experience, she leads with heart, excellence, and purpose.",
     image: IMG.founder,
     stats: [
       { value: "15+", label: "Years Experience" },
@@ -297,44 +297,44 @@ export const seedStudioContent: StudioContent = {
     {
       day: "Monday",
       sessions: [
-        { time: "5:30 PM", style: "Bollywood Basics", group: "Kids 7-10", level: "Beginner", instructor: "Anika" },
-        { time: "7:15 PM", style: "Fusion Team Lab", group: "Teens", level: "Intermediate", instructor: "Riya" },
+        { time: "5:30 PM", style: "Bollywood Basics", group: "Kids 7-10", level: "Beginner", instructor: "Yasotharabharathy" },
+        { time: "7:15 PM", style: "Fusion Team Lab", group: "Teens", level: "Intermediate", instructor: "Sangavi" },
       ],
     },
     {
       day: "Tuesday",
       sessions: [
-        { time: "6:00 PM", style: "Kuthu Power", group: "Open", level: "All levels", instructor: "Arjun" },
-        { time: "7:30 PM", style: "Adult Bollywood Fit", group: "Adults", level: "All levels", instructor: "Anika" },
+        { time: "6:00 PM", style: "Kuthu Power", group: "Open", level: "All levels", instructor: "Srivedha" },
+        { time: "7:30 PM", style: "Adult Bollywood Fit", group: "Adults", level: "All levels", instructor: "Yasotharabharathy" },
       ],
     },
     {
       day: "Wednesday",
       sessions: [
-        { time: "5:45 PM", style: "Junior Hip-Hop", group: "Juniors", level: "Beginner", instructor: "Arjun" },
-        { time: "7:15 PM", style: "Contemporary Flow", group: "Teens & Adults", level: "Intermediate", instructor: "Sahana" },
+        { time: "5:45 PM", style: "Junior Hip-Hop", group: "Juniors", level: "Beginner", instructor: "Srivedha" },
+        { time: "7:15 PM", style: "Contemporary Flow", group: "Teens & Adults", level: "Intermediate", instructor: "Venkatesh" },
       ],
     },
     {
       day: "Thursday",
       sessions: [
-        { time: "6:00 PM", style: "Bollywood Performance", group: "Teens", level: "Intermediate", instructor: "Anika" },
-        { time: "7:30 PM", style: "Hip-Hop Crew Drills", group: "Open", level: "Intermediate", instructor: "Arjun" },
+        { time: "6:00 PM", style: "Bollywood Performance", group: "Teens", level: "Intermediate", instructor: "Yasotharabharathy" },
+        { time: "7:30 PM", style: "Hip-Hop Crew Drills", group: "Open", level: "Intermediate", instructor: "Srivedha" },
       ],
     },
     {
       day: "Friday",
       sessions: [
-        { time: "6:15 PM", style: "Fusion Choreo", group: "Competition team", level: "Advanced", instructor: "Riya" },
-        { time: "7:45 PM", style: "Adult Kuthu Fit", group: "Adults", level: "All levels", instructor: "Arjun" },
+        { time: "6:15 PM", style: "Fusion Choreo", group: "Competition team", level: "Advanced", instructor: "Sangavi" },
+        { time: "7:45 PM", style: "Adult Kuthu Fit", group: "Adults", level: "All levels", instructor: "Srivedha" },
       ],
     },
     {
       day: "Saturday",
       sessions: [
-        { time: "10:00 AM", style: "Mini Movers Bollywood", group: "Ages 4-6", level: "Beginner", instructor: "Anika" },
-        { time: "11:30 AM", style: "Contemporary Foundations", group: "Juniors", level: "Beginner", instructor: "Sahana" },
-        { time: "1:00 PM", style: "Performance Team Rehearsal", group: "Selected", level: "Advanced", instructor: "Riya" },
+        { time: "10:00 AM", style: "Mini Movers Bollywood", group: "Ages 4-6", level: "Beginner", instructor: "Yasotharabharathy" },
+        { time: "11:30 AM", style: "Contemporary Foundations", group: "Juniors", level: "Beginner", instructor: "Venkatesh" },
+        { time: "1:00 PM", style: "Performance Team Rehearsal", group: "Selected", level: "Advanced", instructor: "Sangavi" },
       ],
     },
     {
@@ -346,37 +346,37 @@ export const seedStudioContent: StudioContent = {
   ],
   instructors: [
     {
-      name: "Anika Rao",
+      name: "Yasotharabharathy Singarayar",
       role: "Founder & Director",
       specialties: "Bollywood, Fusion, Contemporary",
-      bio: "Anika leads the studio vision with a teaching style that balances discipline, warmth, and visible stage confidence.",
+      bio: "Yasotharabharathy leads the studio vision with a teaching style that balances discipline, warmth, and visible stage confidence.",
       image: IMG.bollywoodRed,
       instagram: "https://www.instagram.com/bollyfit_dance_studio/",
       youtube: "https://www.youtube.com/",
     },
     {
-      name: "Arjun Selvan",
+      name: "Srivedha Singarayar",
       role: "Lead Choreographer",
       specialties: "Kuthu, Hip-Hop, Folk Fusion",
-      bio: "Arjun focuses on timing, stamina, and crowd-commanding energy for dancers building a stronger performance identity.",
+      bio: "Srivedha focuses on timing, stamina, and crowd-commanding energy for dancers building a stronger performance identity.",
       image: IMG.kuthu,
       instagram: "https://www.instagram.com/bollyfit_dance_studio/",
       youtube: "https://www.youtube.com/",
     },
     {
-      name: "Sahana Iyer",
-      role: "Contemporary Lead",
+      name: "Venkatesh Pandi",
+      role: "Choreographer",
       specialties: "Contemporary, Lyrical",
-      bio: "Sahana helps dancers move with more range, fluidity, and intention while keeping choreography emotionally grounded.",
+      bio: "Venkatesh helps dancers move with more range, fluidity, and intention while keeping choreography emotionally grounded.",
       image: IMG.contemporary,
       instagram: "https://www.instagram.com/bollyfit_dance_studio/",
       youtube: "https://www.youtube.com/",
     },
     {
-      name: "Riya Krish",
-      role: "Competition Team Coach",
+      name: "Sangavi Singarayar",
+      role: "Manager",
       specialties: "Fusion, Stage Direction",
-      bio: "Riya shapes polished competition sets and trains teams to move with precision under pressure.",
+      bio: "Sangavi shapes polished competition sets and trains teams to move with precision under pressure.",
       image: IMG.hiphop,
       instagram: "https://www.instagram.com/bollyfit_dance_studio/",
       youtube: "https://www.youtube.com/",

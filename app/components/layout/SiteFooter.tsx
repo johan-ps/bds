@@ -128,8 +128,8 @@ export function SiteFooter() {
       <div className="container footer-bottom">
         <span>© {new Date().getFullYear()} BollyFit Dance Studio. All rights reserved.</span>
         <span className="footer-bottom__links">
-          <Link href="/about">Privacy Policy</Link>
-          <Link href="/about">Terms of Service</Link>
+          <Link href="/privacy-policy">Privacy Policy</Link>
+          <Link href="/terms-of-service">Terms of Service</Link>
         </span>
       </div>
     </footer>

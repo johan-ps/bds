@@ -103,6 +103,16 @@ function HeroPanel() {
         className="hero-panel__media"
         style={{ backgroundImage: `url(${resolveImageUrl(content.hero.backgroundImage)})` }}
       />
+      <EditableDiv
+        field={{
+          kind: "image",
+          path: "hero.spotlightImage",
+          label: "Hero spotlight image",
+          alt: "Hero spotlight image",
+        }}
+        className="hero-panel__subject"
+        style={{ backgroundImage: `url(${resolveImageUrl(content.hero.spotlightImage)})` }}
+      />
       <div className="hero-panel__veil" />
       <div className="hero-panel__glow hero-panel__glow--one" />
       <div className="hero-panel__glow hero-panel__glow--two" />
